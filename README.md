@@ -3,7 +3,7 @@
 O Ethanol AI é uma ferramenta útil para estudar o comportamento de diferentes processos de produção de etanol de segunda geração, quando submetidos a diferentes condições operacionais.
 As previsões são feitas utilizando dados públicos de trabalhos de pesquisa realizados anteriormente.
 
-## Demo App
+## Executar o App
 
 [![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://ethanol-ai.streamlit.app/)
 
