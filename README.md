@@ -5,7 +5,7 @@ As previsões são feitas utilizando dados públicos de trabalhos de pesquisa re
 
 ## Demo App
 
-[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://EthanolAI.streamlit.app/)
+[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://ethanol-ai.streamlit.app/)
 
 ## GitHub Codespaces
 
