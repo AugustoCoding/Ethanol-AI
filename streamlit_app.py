@@ -7,9 +7,9 @@ st.title('⚗️ Ethanol AI')
 # Informação principal
 st.info('Aqui é possível prever as melhores condições para produzir o seu etanol de segunda geração.')
 
-# Adicionando uma sidebar
+# Os parâmetros do modelo são inseridos na sidebar
 st.sidebar.title("Parâmetros")
-st.sidebar.write("Aqui você pode ajustar os parâmetros do modelo.")
+st.sidebar.write("Ajuste os parâmetros do modelo.")
 
 # Escolha da biomassa
 biomassa = st.sidebar.selectbox('Biomassa', ['Bagaço de Cana-de-Açúcar', 'Palha da Cana-de-Açúcar', 'Palha de milho'])
