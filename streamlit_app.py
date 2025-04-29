@@ -33,9 +33,9 @@ if biomassa == "Bagaço de Cana-de-Açúcar":
   st.sidebar.number_input("Parâmetro 1")
   st.sidebar.number_input("Parâmetro 2")
   st.sidebar.number_input("Parâmetro 3")
-  st.sidebar.select_box("Parâmetro 4")
-  st.sidebar.select_box("Parâmetro 5")
-  st.sidebar.select_box("Parâmetro 6")
+  st.sidebar.selectbox("Parâmetro 4")
+  st.sidebar.selectbox("Parâmetro 5")
+  st.sidebar.selectbox("Parâmetro 6")
   
 # Exemplo de campo de input
 valor_input = st.sidebar.number_input("Concentração de Enzimas")
