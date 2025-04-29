@@ -6,7 +6,7 @@ st.title('⚗️Ethanol AI')
 
 # Informação principal
 st.write("O Ethanol AI é uma ferramenta útil para estudar o comportamento de diferentes processos de produção de etanol de segunda geração, quando submetidos a diferentes condições operacionais. Aqui, você pode testar diferentes combinações de parâmetros de reação, encontrando essencialmente o rendimento máximo possível para cada situação.")
-
+st.markdown("<hr style='border: 1px solid #ccc;' />", unsafe_allow_html=True)
 # Escolha da biomassa
 st.sidebar.header("Biomassa")
 biomassa = st.sidebar.selectbox("Selecione um tipo", ['Bagaço de Cana-de-Açúcar', 'Palha da Cana-de-Açúcar', 'Palha de milho'])
@@ -56,7 +56,7 @@ with col1:
         milho4 = st.selectbox("Parâmetro 4 - Milho", options=["Opção 1", "Opção 2", "Opção 3"])
         milho5 = st.selectbox("Parâmetro 5 - Milho", options=["Opção A", "Opção B", "Opção C"])
         milho6 = st.selectbox("Parâmetro 6 - Milho", options=["Sim", "Não"])
-st.markdown("<hr style='border: 1px solid #ccc;' />", unsafe_allow_html=True)
+
 # Personalizando a coluna Resultados (col2)
 from plotly import graph_objs as go
 with col2:
