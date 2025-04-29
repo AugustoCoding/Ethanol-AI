@@ -12,6 +12,10 @@ st.info('Aqui é possível prever as melhores condições para produzir o seu et
 st.sidebar.title("Parâmetros")
 st.sidebar.write("Aqui você pode ajustar os parâmetros do modelo.")
 
+# Escolha da biomassa
+biomassa = st.sidebar.selectbox('Biomassa', ['Bagaço de Cana-de-Açúcar', 'Palha da Cana-de-Açúcar', 'Palha de milho'])
+st.write(f"Você escolheu: {opcao}")
+
 # Exemplo de campo de input
 valor_input = st.sidebar.number_input("Concentração de Enzimas")
 st.write(f"Concentração de Enzimas: {valor_input}")
@@ -19,7 +23,3 @@ st.write(f"Concentração de Enzimas: {valor_input}")
 # Exemplo de slider na sidebar
 valor_slider = st.sidebar.slider('Escolha um valor', 0, 100, 50)
 st.write(f"Você selecionou o valor: {valor_slider}")
-
-# Exemplo de seleção na sidebar
-opcao = st.sidebar.selectbox('Escolha uma opção', ['Opção 1', 'Opção 2', 'Opção 3'])
-st.write(f"Você escolheu: {opcao}")
