@@ -14,19 +14,18 @@ st.markdown("<hr style='border: 1px solid #ccc;' />", unsafe_allow_html=True)
 # Criando colunas "Parâmetros" e "Resultados"
 col1, spacer, col2, spacer2, col3 = st.columns([10, 3, 10, 3, 10])
 
+# Personalizando a coluna Bimomassa(col1)
 with col1:
     # Escolha da biomassa
     st.header("Biomassa")
+    st.write("Informe os dados de sua biomassa.")
     biomassa = st.selectbox("Selecione um tipo", ['Bagaço de Cana-de-Açúcar', 'Palha da Cana-de-Açúcar', 'Palha de milho'])
-    
-    # Ajustando a composição da biomassa
-    st.header('Composição')
     celulose = st.number_input("Porcentagem de Celulose", min_value=0.0, max_value=100.0, format="%.2f")
     lignina = st.number_input("Porcentagem de Lignina", min_value=0.0, max_value=100.0, format="%.2f")
     hemicelulose = st.number_input("Porcentagem de Hemicelulose", min_value=0.0, max_value=100.0, format="%.2f")
     cinzas = st.number_input("Porcentagem de cinzas", min_value=0.0, max_value=100.0, format="%.2f")
 
-# Personalizando a coluna Parâmetros (col1)
+# Personalizando a coluna Parâmetros de Reação (col2)
 with col2:
     
     # Se a biomassa escolhida foi Bagaço de Cana-de-Açúcar
@@ -43,6 +42,7 @@ with col2:
     # Se a biomassa escolhida foi Palha da Cana-de-Açúcar
     if biomassa == "Palha da Cana-de-Açúcar":
         st.header("Parâmetros de Reação")
+        st.write("Informe as característcas da biomassa.")
         st.write(f"Selecione os parâmetros para definir a sua condição de operação para {biomassa}.")
         palha1 = st.number_input("Parâmetro 1 - Palha Cana")
         palha2 = st.number_input("Parâmetro 2 - Palha Cana")
@@ -54,7 +54,7 @@ with col2:
     # Se a biomassa escolhida foi Palha de Milho
     if biomassa == "Palha de milho":
         st.header("Parâmetros de Reação")
-        st.write(f"Selecione os parâmetros para definir a sua condição de operação para {biomassa}.")
+        st.write(f"Informe os parâmetros da reação para definir a sua condição de operação de {biomassa}.")
         milho1 = st.number_input("Parâmetro 1 - Milho")
         milho2 = st.number_input("Parâmetro 2 - Milho")
         milho3 = st.number_input("Parâmetro 3 - Milho")
@@ -62,9 +62,11 @@ with col2:
         milho5 = st.selectbox("Parâmetro 5 - Milho", options=["Opção A", "Opção B", "Opção C"])
         milho6 = st.selectbox("Parâmetro 6 - Milho", options=["Sim", "Não"])
 
-# Personalizando a coluna Resultados (col2)
+# Personalizando a coluna Resultados (col3)
 from plotly import graph_objs as go
 with col3:
+    st.header("Resultados")
+    st.write("Observe os resultados obtidos nessa coluna. Alterne a disposição do gráfico para visualizar mais relações.")
     # Criando um gráfico de exemplo
     fig = go.Figure(data=[go.Bar(x=['Categoria 1', 'Categoria 2', 'Categoria 3'], y=[10, 20, 30])])
     fig.update_layout(title="Exemplo de Gráfico", xaxis_title="Categorias", yaxis_title="Valores")
