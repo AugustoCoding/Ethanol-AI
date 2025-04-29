@@ -13,7 +13,7 @@ st.sidebar.info("Preencha os campos abaixo para calcular o rendimento máximo ap
 
 # Escolha da biomassa
 st.sidebar.header("Biomassa")
-biomassa = st.sidebar.selectbox(['Bagaço de Cana-de-Açúcar', 'Palha da Cana-de-Açúcar', 'Palha de milho'])
+biomassa = st.sidebar.selectbox("Selecione um tipo", ['Bagaço de Cana-de-Açúcar', 'Palha da Cana-de-Açúcar', 'Palha de milho'])
 st.write(f"Você escolheu: {biomassa}")
 
 # Ajustando a composição da biomassa
