@@ -5,7 +5,7 @@ import pandas as pd
 st.title('⚗️Ethanol AI')
 
 # Informação principal
-st.write("")
+st.write("O Ethanol AI é uma ferramenta útil para estudar o comportamento de diferentes processos de produção de etanol de segunda geração, quando submetidos a diferentes condições operacionais. Aqui, você pode testar diferentes combinações de parâmetros de reação, encontrando essencialmente o rendimento máximo possível para cada situação.")
 
 # Escolha da biomassa
 st.sidebar.header("Biomassa")
