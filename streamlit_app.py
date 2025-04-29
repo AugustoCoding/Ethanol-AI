@@ -4,6 +4,9 @@ import pandas as pd
 # Título do app
 st.title('⚗️Ethanol AI')
 
+# Informação principal
+st.write("")
+
 # Escolha da biomassa
 st.sidebar.header("Biomassa")
 biomassa = st.sidebar.selectbox("Selecione um tipo", ['Bagaço de Cana-de-Açúcar', 'Palha da Cana-de-Açúcar', 'Palha de milho'])
