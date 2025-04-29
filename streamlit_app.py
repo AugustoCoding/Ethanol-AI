@@ -14,7 +14,7 @@ st.sidebar.write("Aqui você pode ajustar os parâmetros do modelo.")
 
 # Exemplo de campo de input
 valor_input = st.sidebar.number_input("Concentração de Enzimas")
-st.write(f"Concentração de Enzimas")
+st.write(f"Concentração de Enzimas: {valor_input}")
 
 # Exemplo de slider na sidebar
 valor_slider = st.sidebar.slider('Escolha um valor', 0, 100, 50)
