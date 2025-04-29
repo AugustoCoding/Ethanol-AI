@@ -14,7 +14,6 @@ st.sidebar.info("Preencha os campos abaixo para calcular o rendimento máximo ap
 # Escolha da biomassa
 st.sidebar.header("Biomassa")
 biomassa = st.sidebar.selectbox("Selecione um tipo", ['Bagaço de Cana-de-Açúcar', 'Palha da Cana-de-Açúcar', 'Palha de milho'])
-st.write(f"Você escolheu: {biomassa}")
 
 # Ajustando a composição da biomassa
 
@@ -37,11 +36,3 @@ if biomassa == "Bagaço de Cana-de-Açúcar":
   st.sidebar.selectbox("Parâmetro 4", ['Opção 1', 'Opção 2', 'Opção 3'])
   st.sidebar.selectbox("Parâmetro 5", ['Opção 1', 'Opção 2', 'Opção 3'])
   st.sidebar.selectbox("Parâmetro 6", ['Opção 1', 'Opção 2', 'Opção 3'])
-  
-# Exemplo de campo de input
-valor_input = st.sidebar.number_input("Concentração de Enzimas")
-st.write(f"Concentração de Enzimas: {valor_input}")
-
-# Exemplo de slider na sidebar
-valor_slider = st.sidebar.slider('Escolha um valor', 0, 100, 50)
-st.write(f"Você selecionou o valor: {valor_slider}")
