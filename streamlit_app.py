@@ -1,6 +1,5 @@
 import streamlit as st
 import pandas as pd
-from plotly import graph_objs as go
 
 # Título do app
 st.title('⚗️Ethanol AI')
@@ -56,6 +55,7 @@ with col1:
         milho6 = st.selectbox("Parâmetro 6 - Milho", options=["Sim", "Não"])
 
 # Personalizando a coluna Resultados (col2)
+from plotly import graph_objs as go
 with col2:
     # Criando um gráfico de exemplo
     fig = go.Figure(data=[go.Bar(x=['Categoria 1', 'Categoria 2', 'Categoria 3'], y=[10, 20, 30])])
