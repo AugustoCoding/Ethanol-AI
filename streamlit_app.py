@@ -35,7 +35,7 @@ if biomassa == "Bagaço de Cana-de-Açúcar":
     bagaco6 = st.selectbox("Parâmetro 6 - Bagaço", options=["Sim", "Não"])
 
 # Se a biomassa escolhida foi Palha da Cana-de-Açúcar
-elif biomassa == "Palha da Cana-de-Açúcar":
+if biomassa == "Palha da Cana-de-Açúcar":
     palha1 = st.sidebar.number_input("Parâmetro 1 - Palha Cana")
     palha2 = st.sidebar.number_input("Parâmetro 2 - Palha Cana")
     palha3 = st.sidebar.number_input("Parâmetro 3 - Palha Cana")
@@ -44,7 +44,7 @@ elif biomassa == "Palha da Cana-de-Açúcar":
     palha6 = st.sidebar.selectbox("Parâmetro 6 - Palha Cana", options=["Sim", "Não"])
 
 # Se a biomassa escolhida foi Palha de Milho
-elif biomassa == "Palha de milho":
+if biomassa == "Palha de milho":
     milho1 = st.sidebar.number_input("Parâmetro 1 - Milho")
     milho2 = st.sidebar.number_input("Parâmetro 2 - Milho")
     milho3 = st.sidebar.number_input("Parâmetro 3 - Milho")
