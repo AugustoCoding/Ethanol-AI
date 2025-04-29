@@ -4,14 +4,9 @@ import pandas as pd
 # Título do app
 st.title('⚗️Ethanol AI')
 
-# Informação principal
-st.info('Aqui é possível prever as melhores condições para produzir o seu etanol de segunda geração.')
-
 # Escolha da biomassa
 st.sidebar.header("Biomassa")
 biomassa = st.sidebar.selectbox("Selecione um tipo", ['Bagaço de Cana-de-Açúcar', 'Palha da Cana-de-Açúcar', 'Palha de milho'])
-st.header("Parâmetros")
-st.write(f"Selecione os parâmetros para definir a sua condição de operação para {biomassa}.")
 
 # Ajustando a composição da biomassa
 
@@ -23,6 +18,8 @@ cinzas = st.sidebar.number_input("Porcentagem de cinzas", min_value=0.0, max_val
 
 # Se a biomassa escolhida foi Bagaço de Cana-de-Açúcar
 if biomassa == "Bagaço de Cana-de-Açúcar":
+    st.header("Parâmetros")
+    st.write(f"Selecione os parâmetros para definir a sua condição de operação para {biomassa}.")
     bagaco1 = st.number_input("Parâmetro 1 - Bagaço")
     bagaco2 = st.number_input("Parâmetro 2 - Bagaço")
     bagaco3 = st.number_input("Parâmetro 3 - Bagaço")
