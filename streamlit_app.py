@@ -7,10 +7,6 @@ st.title('⚗️Ethanol AI')
 # Informação principal
 st.info('Aqui é possível prever as melhores condições para produzir o seu etanol de segunda geração.')
 
-# Os parâmetros do modelo são inseridos na sidebar
-st.sidebar.title("Parâmetros")
-st.sidebar.info("Preencha os campos abaixo para calcular o rendimento máximo aplicável nas condições disponíveis.")
-
 # Escolha da biomassa
 st.sidebar.header("Biomassa")
 biomassa = st.sidebar.selectbox("Selecione um tipo", ['Bagaço de Cana-de-Açúcar', 'Palha da Cana-de-Açúcar', 'Palha de milho'])
