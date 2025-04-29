@@ -14,6 +14,8 @@ st.sidebar.info("Preencha os campos abaixo para calcular o rendimento máximo ap
 # Escolha da biomassa
 st.sidebar.header("Biomassa")
 biomassa = st.sidebar.selectbox("Selecione um tipo", ['Bagaço de Cana-de-Açúcar', 'Palha da Cana-de-Açúcar', 'Palha de milho'])
+st.header("Parâmetros")
+st.write(f"Selecione os parâmetros para definir a sua condição de operação para {biomassa}.")
 
 # Ajustando a composição da biomassa
 
@@ -22,9 +24,6 @@ celulose = st.sidebar.number_input("Porcentagem de Celulose", min_value=0.0, max
 lignina = st.sidebar.number_input("Porcentagem de Lignina", min_value=0.0, max_value=100.0, format="%.2f")
 hemicelulose = st.sidebar.number_input("Porcentagem de Hemicelulose", min_value=0.0, max_value=100.0, format="%.2f")
 cinzas = st.sidebar.number_input("Porcentagem de cinzas", min_value=0.0, max_value=100.0, format="%.2f")
-
-st.header("Parâmetros")
-st.write(f"Selecione os parâmetros para definir a sua condição de operação para {biomassa}.")
 
 # Se a biomassa escolhida foi Bagaço de Cana-de-Açúcar
 if biomassa == "Bagaço de Cana-de-Açúcar":
