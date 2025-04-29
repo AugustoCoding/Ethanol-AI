@@ -17,12 +17,12 @@ biomassa = st.sidebar.selectbox('Biomassa', ['Bagaço de Cana-de-Açúcar', 'Pal
 st.write(f"Você escolheu: {biomassa}")
 
 
-#Ajustando a composição da biomassa
+# Ajustando a composição da biomassa
 
 st.sidebar.header('Composição')
-st.sidebar.number_input("Porcentagem de Celulose")
-st.sidebar.number_input("Porcentagem de Lignina")
-st.sidebar.number_input("Porcentagem de Hemicelulose")
+st.sidebar.number_input("Porcentagem de Celulose (%)", min_value=0, max_value=100)
+st.sidebar.number_input("Porcentagem de Lignina (%)", min_value=0, max_value=100)
+st.sidebar.number_input("Porcentagem de Hemicelulose (%)", min_value=0, max_value=100)
 
 #Apresentar os campos de input corretos para cada biomassa escolhida
 
