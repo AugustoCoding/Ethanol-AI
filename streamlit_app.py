@@ -9,7 +9,7 @@ st.info('Aqui é possível prever as melhores condições para produzir o seu et
 
 # Os parâmetros do modelo são inseridos na sidebar
 st.sidebar.title("Parâmetros")
-st.sidebar.write("Ajuste os parâmetros do modelo.")
+st.sidebar.write("Preencha os campos abaixo para calcular o rendimento máximo aplicável nas condições disponíveis.")
 
 # Escolha da biomassa
 st.sidebar.header("Biomassa")
