@@ -53,3 +53,7 @@ with col1:
         milho4 = st.selectbox("Parâmetro 4 - Milho", options=["Opção 1", "Opção 2", "Opção 3"])
         milho5 = st.selectbox("Parâmetro 5 - Milho", options=["Opção A", "Opção B", "Opção C"])
         milho6 = st.selectbox("Parâmetro 6 - Milho", options=["Sim", "Não"])
+
+# Personalizando a coluna Resultados (col2)
+with col2:
+    st.plotly_chart()
