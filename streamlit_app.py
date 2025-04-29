@@ -9,7 +9,7 @@ st.write("O Ethanol AI é uma ferramenta útil para estudar o comportamento de d
 st.markdown("<hr style='border: 1px solid #ccc;' />", unsafe_allow_html=True)
 
 # Criando colunas "Parâmetros" e "Resultados"
-col1, col2, col3 = st.columns(2)
+col1, col2, col3 = st.columns(3)
 
 with col1:
     # Escolha da biomassa
