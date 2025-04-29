@@ -1,5 +1,6 @@
 import streamlit as st
 import pandas as pd
+from plotly import graph_objs as go
 
 # Título do app
 st.title('⚗️Ethanol AI')
@@ -56,4 +57,9 @@ with col1:
 
 # Personalizando a coluna Resultados (col2)
 with col2:
-    st.plotly_chart()
+    # Criando um gráfico de exemplo
+    fig = go.Figure(data=[go.Bar(x=['Categoria 1', 'Categoria 2', 'Categoria 3'], y=[10, 20, 30])])
+    fig.update_layout(title="Exemplo de Gráfico", xaxis_title="Categorias", yaxis_title="Valores")
+    
+    # Exibindo o gráfico
+    st.plotly_chart(fig)
