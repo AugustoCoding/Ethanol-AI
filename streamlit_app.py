@@ -9,8 +9,12 @@ st.info('Aqui é possível prever as melhores condições para produzir o seu et
 
 
 # Adicionando uma sidebar
-st.sidebar.title("Configurações")
-st.sidebar.write("Aqui você pode ajustar as configurações do app.")
+st.sidebar.title("Parâmetros")
+st.sidebar.write("Aqui você pode ajustar os parâmetros do modelo.")
+
+# Exemplo de campo de input
+valor_input = st.sidebar.number_input("Concentração de Enzimas")
+st.write(f"Concentração de Enzimas")
 
 # Exemplo de slider na sidebar
 valor_slider = st.sidebar.slider('Escolha um valor', 0, 100, 50)
