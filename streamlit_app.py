@@ -13,7 +13,7 @@ st.sidebar.write("Preencha os campos abaixo para calcular o rendimento máximo a
 
 # Escolha da biomassa
 st.sidebar.header("Biomassa")
-biomassa = st.sidebar.selectbox('Selecione uma', ['Bagaço de Cana-de-Açúcar', 'Palha da Cana-de-Açúcar', 'Palha de milho'])
+biomassa = st.sidebar.selectbox('Selecione', ['Bagaço de Cana-de-Açúcar', 'Palha da Cana-de-Açúcar', 'Palha de milho'])
 st.write(f"Você escolheu: {biomassa}")
 
 # Ajustando a composição da biomassa
@@ -25,8 +25,17 @@ hemicelulose = st.sidebar.number_input("Porcentagem de Hemicelulose", min_value=
 
 #Apresentar os campos de input corretos para cada biomassa escolhida
 
+st.sidebar.header("Parâmetos do modelo")
+
+# Se a biomassa escolhida foi Bagaço de Cana-de-Açúcar
+
 if biomassa == "Bagaço de Cana-de-Açúcar":
-  st.sidebar.number_input("Numero")
+  st.sidebar.number_input("Parâmetro 1")
+  st.sidebar.number_input("Parâmetro 2")
+  st.sidebar.number_input("Parâmetro 3")
+  st.sidebar.select_box("Parâmetro 4")
+  st.sidebar.select_box("Parâmetro 5")
+  st.sidebar.select_box("Parâmetro 6")
   
 # Exemplo de campo de input
 valor_input = st.sidebar.number_input("Concentração de Enzimas")
