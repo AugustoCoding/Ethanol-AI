@@ -12,8 +12,8 @@ st.sidebar.title("Parâmetros")
 st.sidebar.write("Ajuste os parâmetros do modelo.")
 
 # Escolha da biomassa
-
-biomassa = st.sidebar.selectbox('Biomassa', ['Bagaço de Cana-de-Açúcar', 'Palha da Cana-de-Açúcar', 'Palha de milho'])
+st.sidebar.header("Biomassa")
+biomassa = st.sidebar.selectbox('Selecione uma', ['Bagaço de Cana-de-Açúcar', 'Palha da Cana-de-Açúcar', 'Palha de milho'])
 st.write(f"Você escolheu: {biomassa}")
 
 # Ajustando a composição da biomassa
