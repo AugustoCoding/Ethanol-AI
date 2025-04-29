@@ -67,7 +67,7 @@ from plotly import graph_objs as go
 with col3:
     st.header("Resultados")
     st.write("Observe os resultados obtidos nessa coluna. Alterne a disposição do gráfico para visualizar mais relações.")
-    st.metric(label="Rendimento Previsto (%)", value = 12)
+    st.metric(label="🔍 **Rendimento Previsto (%)**", value= "86%", delta="Melhorar visual", help="Este é o rendimento previsto para as condições selecionadas.")
     # Criando um gráfico de exemplo
     fig = go.Figure(data=[go.Bar(x=['Categoria 1', 'Categoria 2', 'Categoria 3'], y=[10, 20, 30])])
     fig.update_layout(title="Exemplo de Gráfico", xaxis_title="Categorias", yaxis_title="Valores")
