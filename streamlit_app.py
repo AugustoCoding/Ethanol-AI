@@ -1,6 +1,9 @@
 import streamlit as st
 import pandas as pd
 
+# Configurando o layout para modo "wide"
+st.set_page_config(layout="wide")
+
 # Título do app
 st.title('⚗️Ethanol AI')
 
