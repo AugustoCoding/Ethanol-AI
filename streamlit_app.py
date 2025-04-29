@@ -25,7 +25,7 @@ hemicelulose = st.sidebar.number_input("Porcentagem de Hemicelulose", min_value=
 
 #Apresentar os campos de input corretos para cada biomassa escolhida
 
-if biomassa = "Bagaço de Cana-de-Açúcar"
+if biomassa == "Bagaço de Cana-de-Açúcar"
   st.sidebar.number_input("Numero")
   
 # Exemplo de campo de input
