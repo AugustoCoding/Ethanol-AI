@@ -9,7 +9,7 @@ st.info('Aqui é possível prever as melhores condições para produzir o seu et
 
 # Os parâmetros do modelo são inseridos na sidebar
 st.sidebar.title("Parâmetros")
-st.sidebar.write("Preencha os campos abaixo para calcular o rendimento máximo aplicável nas condições disponíveis.")
+st.sidebar.info("Preencha os campos abaixo para calcular o rendimento máximo aplicável nas condições disponíveis.")
 
 # Escolha da biomassa
 st.sidebar.header("Biomassa")
@@ -22,6 +22,7 @@ st.sidebar.header('Composição')
 celulose = st.sidebar.number_input("Porcentagem de Celulose", min_value=0.0, max_value=100.0, format="%.2f")
 lignina = st.sidebar.number_input("Porcentagem de Lignina", min_value=0.0, max_value=100.0, format="%.2f")
 hemicelulose = st.sidebar.number_input("Porcentagem de Hemicelulose", min_value=0.0, max_value=100.0, format="%.2f")
+cinzas = st.sidebar.number_input("Porcentagem de cinzas", min_value=0.0, max_value=100.0, format="%.2f")
 
 #Apresentar os campos de input corretos para cada biomassa escolhida
 
