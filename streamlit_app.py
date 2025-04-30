@@ -73,3 +73,5 @@ with col3:
     
     # Exibindo o gráfico
     st.plotly_chart(fig)
+
+st.markdown("<hr style='border: 1px solid #ccc;' />", unsafe_allow_html=True)
