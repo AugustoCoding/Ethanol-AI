@@ -107,30 +107,30 @@ with col5:
     catalizador = st.selectbox("Catalizador", ['Tipo 1', 'Tipo 2', 'Tipo 3'])
     # Se o catalizador utilizado foi Tipo 1
     if catalizador == "Tipo 1":
-        bagaco11 = st.number_input("Parâmetro 1 - Bagaço")
-        bagaco21 = st.number_input("Parâmetro 2 - Bagaço")
-        bagaco31 = st.number_input("Parâmetro 3 - Bagaço")
-        bagaco41 = st.selectbox("Parâmetro 4 - Bagaço", options=["Opção 1", "Opção 2", "Opção 3"])
-        bagaco51 = st.selectbox("Parâmetro 5 - Bagaço", options=["Opção A", "Opção B", "Opção C"])
-        bagaco61 = st.selectbox("Parâmetro 6 - Bagaço", options=["Sim", "Não"])
+        bagaco11 = st.number_input("Parâmetro 11 - Bagaço")
+        bagaco21 = st.number_input("Parâmetro 21 - Bagaço")
+        bagaco31 = st.number_input("Parâmetro 31 - Bagaço")
+        bagaco41 = st.selectbox("Parâmetro 41 - Bagaço", options=["Opção 1", "Opção 2", "Opção 3"])
+        bagaco51 = st.selectbox("Parâmetro 51- Bagaço", options=["Opção A", "Opção B", "Opção C"])
+        bagaco61 = st.selectbox("Parâmetro 61 - Bagaço", options=["Sim", "Não"])
 
     # Se o catalizador utilizado foi Tipo 2
     if catalizador == "Tipo 2":
-        palha11 = st.number_input("Parâmetro 1 - Palha Cana")
-        palha21 = st.number_input("Parâmetro 2 - Palha Cana")
-        palha31 = st.number_input("Parâmetro 3 - Palha Cana")
-        palha41= st.selectbox("Parâmetro 4 - Palha Cana", options=["Opção 1", "Opção 2", "Opção 3"])
-        palha51 = st.selectbox("Parâmetro 5 - Palha Cana", options=["Opção A", "Opção B", "Opção C"])
-        palha61 = st.selectbox("Parâmetro 6 - Palha Cana", options=["Sim", "Não"])
+        palha11 = st.number_input("Parâmetro 11 - Palha Cana")
+        palha21 = st.number_input("Parâmetro 21 - Palha Cana")
+        palha31 = st.number_input("Parâmetro 31 - Palha Cana")
+        palha41= st.selectbox("Parâmetro 41 - Palha Cana", options=["Opção 1", "Opção 2", "Opção 3"])
+        palha51 = st.selectbox("Parâmetro 51 - Palha Cana", options=["Opção A", "Opção B", "Opção C"])
+        palha61 = st.selectbox("Parâmetro 61 - Palha Cana", options=["Sim", "Não"])
     
     # Se o catalizador utilizado foi Tipo 3
     if catalizador == "Tipo 3":
-        milho11 = st.number_input("Parâmetro 1 - Milho")
-        milho21 = st.number_input("Parâmetro 2 - Milho")
-        milho31 = st.number_input("Parâmetro 3 - Milho")
-        milho41 = st.selectbox("Parâmetro 4 - Milho", options=["Opção 1", "Opção 2", "Opção 3"])
-        milho51 = st.selectbox("Parâmetro 5 - Milho", options=["Opção A", "Opção B", "Opção C"])
-        milho61 = st.selectbox("Parâmetro 6 - Milho", options=["Sim", "Não"])
+        milho11 = st.number_input("Parâmetro 11 - Milho")
+        milho21 = st.number_input("Parâmetro 21 - Milho")
+        milho31 = st.number_input("Parâmetro 31 - Milho")
+        milho41 = st.selectbox("Parâmetro 41 - Milho", options=["Opção 1", "Opção 2", "Opção 3"])
+        milho51 = st.selectbox("Parâmetro 51 - Milho", options=["Opção A", "Opção B", "Opção C"])
+        milho61 = st.selectbox("Parâmetro 61 - Milho", options=["Sim", "Não"])
 
 # Personalizando a coluna Resultados da Hidrólise (col6)
 with col6:
