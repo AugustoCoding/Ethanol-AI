@@ -67,11 +67,11 @@ with col2:
         milho5 = st.selectbox("Parâmetro 5 - Milho", options=["Opção A", "Opção B", "Opção C"])
         milho6 = st.selectbox("Parâmetro 6 - Milho", options=["Sim", "Não"])
 
-# Personalizando a coluna Resultados (col3)
+# Personalizando a coluna Resultados do Pré-Tratamento (col3)
 from plotly import graph_objs as go
 with col3:
-    st.header("Resultados")
-    st.write("Observe os resultados obtidos nessa coluna. Alterne a disposição do gráfico para visualizar mais relações.")
+    st.header("Resultados do Pré-Tratamento")
+    st.write(f"Aqui é possível ver os resultados obtidos para a etapa de Pré-Tratamento de {biomassa}. Alterne a disposição do gráfico para visualizar mais relações entre as variáveis.")
     st.metric(label="🔍 **Rendimento Previsto (%)**", value= "86%", delta="Boas Condições", help="Este é o rendimento previsto para as condições selecionadas.")
     # Criando um gráfico de exemplo
     fig = go.Figure(data=[go.Bar(x=['Categoria 1', 'Categoria 2', 'Categoria 3'], y=[10, 20, 30])])
@@ -91,58 +91,52 @@ st.markdown(
 # Criando colunas "Parâmetros" e "Resultados"
 col4, spacer3, col5, spacer4, col6 = st.columns([10, 2, 10, 2, 10])
 
-# Personalizando a coluna Bimomassa(col4)
+# Personalizando a coluna Dados do Pré-Tratamento (col4)
 with col4:
-    # Escolha da biomassa
-    st.header("Biomassa")
-    st.write("Informe os dados de sua biomassa.")
-    biomassa = st.selectbox("Selecione um tipo", ['Bagaço de Cana-de-Açúcar', 'Palha da Cana-de-Açúcar', 'Palha de milho'])
-    celulose = st.number_input("Porcentagem de Celulose", min_value=0.0, max_value=100.0, format="%.2f")
-    lignina = st.number_input("Porcentagem de Lignina", min_value=0.0, max_value=100.0, format="%.2f")
-    hemicelulose = st.number_input("Porcentagem de Hemicelulose", min_value=0.0, max_value=100.0, format="%.2f")
-    cinzas = st.number_input("Porcentagem de cinzas", min_value=0.0, max_value=100.0, format="%.2f")
+    st.header("Dados do Pré-Tratamento")
+    st.write("Informe os dados obtidos no pré-tratamento.")
+    celulose1 = st.number_input("Porcentagem de Celulose Restante", min_value=0.0, max_value=100.0, format="%.2f")
+    lignina1 = st.number_input("Porcentagem de Lignina Restante", min_value=0.0, max_value=100.0, format="%.2f")
+    hemicelulose1 = st.number_input("Porcentagem de Hemicelulose Restante", min_value=0.0, max_value=100.0, format="%.2f")
+    cinzas1 = st.number_input("Porcentagem de cinzas Restante", min_value=0.0, max_value=100.0, format="%.2f")
 
-# Personalizando a coluna Parâmetros de Reação (col5)
+# Personalizando a coluna Parâmetros da Hidrólise (col5)
 with col5:
-    
-    # Se a biomassa escolhida foi Bagaço de Cana-de-Açúcar
-    if biomassa == "Bagaço de Cana-de-Açúcar":
-        st.header("Parâmetros de Reação")
-        st.write(f"Informe os parâmetros da reação para definir a sua condição de operação de {biomassa}.")
-        bagaco1 = st.number_input("Parâmetro 1 - Bagaço")
-        bagaco2 = st.number_input("Parâmetro 2 - Bagaço")
-        bagaco3 = st.number_input("Parâmetro 3 - Bagaço")
-        bagaco4 = st.selectbox("Parâmetro 4 - Bagaço", options=["Opção 1", "Opção 2", "Opção 3"])
-        bagaco5 = st.selectbox("Parâmetro 5 - Bagaço", options=["Opção A", "Opção B", "Opção C"])
-        bagaco6 = st.selectbox("Parâmetro 6 - Bagaço", options=["Sim", "Não"])
+    st.header("Parâmetros da Hidrólise")
+    st.write(f"Informe os parâmetros da hidrólise para definir a sua condição de operação de {biomassa}.")
+    catalizador = st.selectbox("Catalizador", ['Tipo 1', 'Tipo 2', 'Tipo 3'])
+    # Se o catalizador utilizado foi Tipo 1
+    if catalizador == "Tipo 1":
+        bagaco11 = st.number_input("Parâmetro 1 - Bagaço")
+        bagaco21 = st.number_input("Parâmetro 2 - Bagaço")
+        bagaco31 = st.number_input("Parâmetro 3 - Bagaço")
+        bagaco41 = st.selectbox("Parâmetro 4 - Bagaço", options=["Opção 1", "Opção 2", "Opção 3"])
+        bagaco51 = st.selectbox("Parâmetro 5 - Bagaço", options=["Opção A", "Opção B", "Opção C"])
+        bagaco61 = st.selectbox("Parâmetro 6 - Bagaço", options=["Sim", "Não"])
 
-    # Se a biomassa escolhida foi Palha da Cana-de-Açúcar
-    if biomassa == "Palha da Cana-de-Açúcar":
-        st.header("Parâmetros de Reação")
-        st.write(f"Informe os parâmetros da reação para definir a sua condição de operação de {biomassa}.")
-        palha1 = st.number_input("Parâmetro 1 - Palha Cana")
-        palha2 = st.number_input("Parâmetro 2 - Palha Cana")
-        palha3 = st.number_input("Parâmetro 3 - Palha Cana")
-        palha4 = st.selectbox("Parâmetro 4 - Palha Cana", options=["Opção 1", "Opção 2", "Opção 3"])
-        palha5 = st.selectbox("Parâmetro 5 - Palha Cana", options=["Opção A", "Opção B", "Opção C"])
-        palha6 = st.selectbox("Parâmetro 6 - Palha Cana", options=["Sim", "Não"])
+    # Se o catalizador utilizado foi Tipo 2
+    if catalizador == "Tipo 2":
+        palha11 = st.number_input("Parâmetro 1 - Palha Cana")
+        palha21 = st.number_input("Parâmetro 2 - Palha Cana")
+        palha31 = st.number_input("Parâmetro 3 - Palha Cana")
+        palha41= st.selectbox("Parâmetro 4 - Palha Cana", options=["Opção 1", "Opção 2", "Opção 3"])
+        palha51 = st.selectbox("Parâmetro 5 - Palha Cana", options=["Opção A", "Opção B", "Opção C"])
+        palha61 = st.selectbox("Parâmetro 6 - Palha Cana", options=["Sim", "Não"])
     
-    # Se a biomassa escolhida foi Palha de Milho
-    if biomassa == "Palha de milho":
-        st.header("Parâmetros de Reação")
-        st.write(f"Informe os parâmetros da reação para definir a sua condição de operação de {biomassa}.")
-        milho1 = st.number_input("Parâmetro 1 - Milho")
-        milho2 = st.number_input("Parâmetro 2 - Milho")
-        milho3 = st.number_input("Parâmetro 3 - Milho")
-        milho4 = st.selectbox("Parâmetro 4 - Milho", options=["Opção 1", "Opção 2", "Opção 3"])
-        milho5 = st.selectbox("Parâmetro 5 - Milho", options=["Opção A", "Opção B", "Opção C"])
-        milho6 = st.selectbox("Parâmetro 6 - Milho", options=["Sim", "Não"])
+    # Se o catalizador utilizado foi Tipo 3
+    if catalizador == "Tipo 3":
+        milho11 = st.number_input("Parâmetro 1 - Milho")
+        milho21 = st.number_input("Parâmetro 2 - Milho")
+        milho31 = st.number_input("Parâmetro 3 - Milho")
+        milho41 = st.selectbox("Parâmetro 4 - Milho", options=["Opção 1", "Opção 2", "Opção 3"])
+        milho51 = st.selectbox("Parâmetro 5 - Milho", options=["Opção A", "Opção B", "Opção C"])
+        milho61 = st.selectbox("Parâmetro 6 - Milho", options=["Sim", "Não"])
 
-# Personalizando a coluna Resultados (col6)
+# Personalizando a coluna Resultados da Hidrólise (col6)
 from plotly import graph_objs as go
 with col6:
-    st.header("Resultados")
-    st.write("Observe os resultados obtidos nessa coluna. Alterne a disposição do gráfico para visualizar mais relações.")
+    st.header("Resultados da Hidrólise")
+    st.write(f"Aqui é possível ver os resultados obtidos para a etapa de Hidrólise de {biomassa}. Alterne a disposição do gráfico para visualizar mais relações entre as variáveis.")
     st.metric(label="🔍 **Rendimento Previsto (%)**", value= "86%", delta="Boas Condições", help="Este é o rendimento previsto para as condições selecionadas.")
     # Criando um gráfico de exemplo
     fig = go.Figure(data=[go.Bar(x=['Categoria 1', 'Categoria 2', 'Categoria 3'], y=[10, 20, 30])])
