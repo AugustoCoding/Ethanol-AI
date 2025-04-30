@@ -24,7 +24,7 @@ with col1:
     lignina = st.number_input("Porcentagem de Lignina", min_value=0.0, max_value=100.0, format="%.2f")
     hemicelulose = st.number_input("Porcentagem de Hemicelulose", min_value=0.0, max_value=100.0, format="%.2f")
     cinzas = st.number_input("Porcentagem de cinzas", min_value=0.0, max_value=100.0, format="%.2f")
-st.markdown("<hr style='border: 1px solid #ccc;' />", unsafe_allow_html=True)
+
 # Personalizando a coluna Parâmetros de Reação (col2)
 with col2:
     
@@ -38,7 +38,7 @@ with col2:
         bagaco4 = st.selectbox("Parâmetro 4 - Bagaço", options=["Opção 1", "Opção 2", "Opção 3"])
         bagaco5 = st.selectbox("Parâmetro 5 - Bagaço", options=["Opção A", "Opção B", "Opção C"])
         bagaco6 = st.selectbox("Parâmetro 6 - Bagaço", options=["Sim", "Não"])
-    st.markdown("<hr style='border: 1px solid #ccc;' />", unsafe_allow_html=True)
+    
     # Se a biomassa escolhida foi Palha da Cana-de-Açúcar
     if biomassa == "Palha da Cana-de-Açúcar":
         st.header("Parâmetros de Reação")
@@ -49,7 +49,7 @@ with col2:
         palha4 = st.selectbox("Parâmetro 4 - Palha Cana", options=["Opção 1", "Opção 2", "Opção 3"])
         palha5 = st.selectbox("Parâmetro 5 - Palha Cana", options=["Opção A", "Opção B", "Opção C"])
         palha6 = st.selectbox("Parâmetro 6 - Palha Cana", options=["Sim", "Não"])
-    st.markdown("<hr style='border: 1px solid #ccc;' />", unsafe_allow_html=True)
+    
     # Se a biomassa escolhida foi Palha de Milho
     if biomassa == "Palha de milho":
         st.header("Parâmetros de Reação")
@@ -60,7 +60,7 @@ with col2:
         milho4 = st.selectbox("Parâmetro 4 - Milho", options=["Opção 1", "Opção 2", "Opção 3"])
         milho5 = st.selectbox("Parâmetro 5 - Milho", options=["Opção A", "Opção B", "Opção C"])
         milho6 = st.selectbox("Parâmetro 6 - Milho", options=["Sim", "Não"])
-st.markdown("<hr style='border: 1px solid #ccc;' />", unsafe_allow_html=True)
+
 # Personalizando a coluna Resultados (col3)
 from plotly import graph_objs as go
 with col3:
