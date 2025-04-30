@@ -16,23 +16,28 @@ st.markdown(
     "<h1 style='font-size:50px;'>Etapa de Pré-Tratamento</h1>",
     unsafe_allow_html=True
 )
+st.write("Nesta seção, introduza os dados relevantes ao cálculo do redimento do Pré-Tratamento.")
 
 # Criando colunas "Parâmetros" e "Resultados"
 col1, spacer, col2, spacer2, col3 = st.columns([10, 2, 10, 2, 10])
 
 # Personalizando a coluna Bimomassa(col1)
 with col1:
-    # Escolha da biomassa
-    st.header("Biomassa")
-    st.write("Informe os dados de sua biomassa.")
-    biomassa = st.selectbox("Selecione um tipo", ['Bagaço de Cana-de-Açúcar', 'Palha da Cana-de-Açúcar', 'Palha de milho'])
-    celulose = st.number_input("Porcentagem de Celulose", min_value=0.0, max_value=100.0, format="%.2f")
-    lignina = st.number_input("Porcentagem de Lignina", min_value=0.0, max_value=100.0, format="%.2f")
-    hemicelulose = st.number_input("Porcentagem de Hemicelulose", min_value=0.0, max_value=100.0, format="%.2f")
-    cinzas = st.number_input("Porcentagem de cinzas", min_value=0.0, max_value=100.0, format="%.2f")
+    # Escolha das características do modelo
+    st.header("Dados Iniciais")
+    st.write("Informe os dados iniciais de sua simulação.")
+    biomassa = st.selectbox("Selecione um tipo de biomassa", ['Bagaço de Cana-de-Açúcar', 'Palha da Cana-de-Açúcar', 'Palha de milho'])
+    pretratamento = st.selectbox("Selecione um tipo de Pré-Tratamento", ['Ácido/Básico', 'Explosão a Vapor', 'Organossolve'])
+    celulose = st.number_input("Porcentagem de Celulose (0,00 - 100,00) (%)", min_value=0.0, max_value=100.0, format="%.2f")
+    lignina = st.number_input("Porcentagem de Lignina (0,00 - 100,00) (%)", min_value=0.0, max_value=100.0, format="%.2f")
+    hemicelulose = st.number_input("Porcentagem de Hemicelulose (0,00 - 100,00) (%)", min_value=0.0, max_value=100.0, format="%.2f")
+    cinzas = st.number_input("Porcentagem de cinzas (0,00 - 100,00) (%)", min_value=0.0, max_value=100.0, format="%.2f")
 
-# Personalizando a coluna Parâmetros de Reação (col2)
+# Personalizando a coluna Parâmetros do Pré-Tratamento (col2)
 with col2:
+    
+    st.header("Parâmetros do Pré-Tratamento")
+    st.write(f"Informe os parâmetros da reação para definir a sua condição de operação de {biomassa}.")
     
     # Se a biomassa escolhida foi Bagaço de Cana-de-Açúcar
     if biomassa == "Bagaço de Cana-de-Açúcar":
