@@ -72,7 +72,7 @@ from plotly import graph_objs as go
 with col3:
     st.header("Resultados do Pré-Tratamento")
     st.write(f"Aqui é possível ver os resultados obtidos para a etapa de Pré-Tratamento de {biomassa}. Alterne a disposição do gráfico para visualizar mais relações entre as variáveis.")
-    st.metric(label="🔍 **Rendimento Previsto (%)**", value= "86%", delta="+5%", help="Este é o rendimento previsto para as condições selecionadas.")
+    st.metric(label="🔍 **Rendimento Previsto (%)**", value= "86%", delta="+6%", help="Este é o rendimento previsto para as condições selecionadas.")
     # Criando um gráfico de exemplo
     fig = go.Figure(data=[go.Bar(x=['Categoria 1', 'Categoria 2', 'Categoria 3'], y=[10, 20, 30])])
     fig.update_layout(title="Exemplo de Gráfico", xaxis_title="Categorias", yaxis_title="Valores")
@@ -136,7 +136,7 @@ with col5:
 with col6:
     st.header("Resultados da Hidrólise")
     st.write(f"Aqui é possível ver os resultados obtidos para a etapa de Hidrólise de {biomassa}. Alterne a disposição do gráfico para visualizar mais relações entre as variáveis.")
-    st.metric(label="🔍 **Rendimento Previsto (%)**", value= "86%", delta="+5%", help="Este é o rendimento previsto para as condições selecionadas.")
+    st.metric(label="🔍 **Rendimento Previsto (%)**", value= "91%", delta="+5%", help="Este é o rendimento previsto para as condições selecionadas.")
     # Criando um gráfico de exemplo
     fig1 = go.Figure(data=[go.Bar(x=['Categoria 1', 'Categoria 2', 'Categoria 3'], y=[10, 20, 30])])
     fig1.update_layout(title="Exemplo de Gráfico", xaxis_title="Categorias", yaxis_title="Valores")
