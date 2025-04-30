@@ -12,7 +12,11 @@ st.write("O Ethanol AI é uma ferramenta útil para estudar o comportamento de d
 st.markdown("<hr style='border: 1px solid #ccc;' />", unsafe_allow_html=True)
 
 # Etapa de Pré-Tratamento
-st.header("Etapa de Pré-Tratamento")
+# Centralizando a header "Etapa de Pré-Tratamento"
+st.markdown(
+    "<h2 style='text-align: center;'>Etapa de Pré-Tratamento</h2>",
+    unsafe_allow_html=True
+)
 
 # Criando colunas "Parâmetros" e "Resultados"
 col1, spacer, col2, spacer2, col3 = st.columns([10, 2, 10, 2, 10])
