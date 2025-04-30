@@ -78,7 +78,7 @@ with col3:
     fig.update_layout(title="Exemplo de Gráfico", xaxis_title="Categorias", yaxis_title="Valores")
     
     # Exibindo o gráfico
-    st.plotly_chart(fig)
+    st.plotly_chart(fig, key = "pretratamento_grafico")
 
 st.markdown("<hr style='border: 1px solid #ccc;' />", unsafe_allow_html=True)
 
@@ -142,4 +142,4 @@ with col6:
     fig1.update_layout(title="Exemplo de Gráfico", xaxis_title="Categorias", yaxis_title="Valores")
     
     # Exibindo o gráfico
-    st.plotly_chart(fig1)
+    st.plotly_chart(fig1, key = hidrolise_grafico)
