@@ -14,7 +14,7 @@ st.markdown("<hr style='border: 1px solid #ccc;' />", unsafe_allow_html=True)
 # Etapa de Pré-Tratamento
 # Centralizando a header "Etapa de Pré-Tratamento"
 st.markdown(
-    "<h1 style='font-size:50px;'>Texto com fonte maior</h1>",
+    "<h1 style='font-size:50px;'>Etapa de Pré-Tratamento</h1>",
     unsafe_allow_html=True
 )
 
