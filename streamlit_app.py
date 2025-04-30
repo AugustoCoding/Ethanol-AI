@@ -12,7 +12,6 @@ st.write("O Ethanol AI é uma ferramenta útil para estudar o comportamento de d
 st.markdown("<hr style='border: 1px solid #ccc;' />", unsafe_allow_html=True)
 
 # Etapa de Pré-Tratamento
-# Centralizando a header "Etapa de Pré-Tratamento"
 st.markdown(
     "<h1 style='font-size:50px;'>Etapa de Pré-Tratamento</h1>",
     unsafe_allow_html=True
@@ -82,3 +81,9 @@ with col3:
     st.plotly_chart(fig)
 
 st.markdown("<hr style='border: 1px solid #ccc;' />", unsafe_allow_html=True)
+
+# Etapa de Hidrólise
+st.markdown(
+    "<h1 style='font-size:50px;'>Etapa de Hidrólise</h1>",
+    unsafe_allow_html=True
+)
