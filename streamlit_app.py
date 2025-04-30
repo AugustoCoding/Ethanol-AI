@@ -9,7 +9,6 @@ st.title('⚗️Ethanol AI (Software em desenvolvimento)')
 
 # Informação principal
 st.write("O Ethanol AI é uma ferramenta útil para estudar o comportamento de diferentes processos de produção de etanol de segunda geração, quando submetidos a diferentes condições operacionais. Aqui, você pode testar diferentes combinações de parâmetros de reação, encontrando essencialmente o rendimento máximo possível para cada situação.")
-st.markdown("<hr style='border: 1px solid #ccc;' />", unsafe_allow_html=True)
 
 # Criando colunas "Parâmetros" e "Resultados"
 col1, spacer, col2, spacer2, col3 = st.columns([10, 2, 10, 2, 10])
@@ -38,7 +37,7 @@ with col2:
         bagaco4 = st.selectbox("Parâmetro 4 - Bagaço", options=["Opção 1", "Opção 2", "Opção 3"])
         bagaco5 = st.selectbox("Parâmetro 5 - Bagaço", options=["Opção A", "Opção B", "Opção C"])
         bagaco6 = st.selectbox("Parâmetro 6 - Bagaço", options=["Sim", "Não"])
-    
+
     # Se a biomassa escolhida foi Palha da Cana-de-Açúcar
     if biomassa == "Palha da Cana-de-Açúcar":
         st.header("Parâmetros de Reação")
