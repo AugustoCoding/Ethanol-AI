@@ -142,4 +142,4 @@ with col6:
     fig1.update_layout(title="Exemplo de Gráfico", xaxis_title="Categorias", yaxis_title="Valores")
     
     # Exibindo o gráfico
-    st.plotly_chart(fig1, key = hidrolise_grafico)
+    st.plotly_chart(fig1, key = "hidrolise_grafico")
