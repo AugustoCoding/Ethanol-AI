@@ -41,8 +41,6 @@ with col2:
     
     # Se a biomassa escolhida foi Bagaço de Cana-de-Açúcar
     if biomassa == "Bagaço de Cana-de-Açúcar":
-        st.header("Parâmetros de Reação")
-        st.write(f"Informe os parâmetros da reação para definir a sua condição de operação de {biomassa}.")
         bagaco1 = st.number_input("Parâmetro 1 - Bagaço")
         bagaco2 = st.number_input("Parâmetro 2 - Bagaço")
         bagaco3 = st.number_input("Parâmetro 3 - Bagaço")
@@ -52,8 +50,6 @@ with col2:
 
     # Se a biomassa escolhida foi Palha da Cana-de-Açúcar
     if biomassa == "Palha da Cana-de-Açúcar":
-        st.header("Parâmetros de Reação")
-        st.write(f"Informe os parâmetros da reação para definir a sua condição de operação de {biomassa}.")
         palha1 = st.number_input("Parâmetro 1 - Palha Cana")
         palha2 = st.number_input("Parâmetro 2 - Palha Cana")
         palha3 = st.number_input("Parâmetro 3 - Palha Cana")
@@ -63,8 +59,6 @@ with col2:
     
     # Se a biomassa escolhida foi Palha de Milho
     if biomassa == "Palha de milho":
-        st.header("Parâmetros de Reação")
-        st.write(f"Informe os parâmetros da reação para definir a sua condição de operação de {biomassa}.")
         milho1 = st.number_input("Parâmetro 1 - Milho")
         milho2 = st.number_input("Parâmetro 2 - Milho")
         milho3 = st.number_input("Parâmetro 3 - Milho")
