@@ -37,7 +37,7 @@ with col1:
 with col2:
     
     st.header("Parâmetros do Pré-Tratamento")
-    st.write(f"Informe os parâmetros da reação para definir a sua condição de operação de {biomassa}.")
+    st.write(f"Informe os parâmetros do pré tratamento para {biomassa}.")
     
     # Se a biomassa escolhida foi Bagaço de Cana-de-Açúcar
     if biomassa == "Bagaço de Cana-de-Açúcar":
