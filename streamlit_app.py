@@ -25,7 +25,7 @@ col1, spacer, col2, spacer2, col3 = st.columns([10, 2, 10, 2, 10])
 with col1:
     # Escolha das características do modelo
     st.header("Dados Iniciais")
-    st.write("Informe os dados iniciais de sua simulação.")
+    st.write("Informe os dados principais de sua simulação.")
     biomassa = st.selectbox("Selecione um tipo de biomassa", ['Bagaço de Cana-de-Açúcar', 'Palha da Cana-de-Açúcar', 'Palha de milho'])
     pretratamento = st.selectbox("Selecione um tipo de Pré-Tratamento", ['Ácido/Básico', 'Explosão a Vapor', 'Organossolve'])
     celulose = st.number_input("Porcentagem de Celulose (0,00 - 100,00) (%)", min_value=0.0, max_value=100.0, format="%.2f")
