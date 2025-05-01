@@ -46,7 +46,7 @@ with col2:
         bagaco3 = st.number_input("Parâmetro 3 - Bagaço")
         bagaco4 = st.selectbox("Parâmetro 4 - Bagaço", options=["Opção 1", "Opção 2", "Opção 3"])
         bagaco5 = st.selectbox("Parâmetro 5 - Bagaço", options=["Opção A", "Opção B", "Opção C"])
-        bagaco6 = st.checkbox("Há presença do reagente x?")
+        bagaco6 = st.checkbox("Presença do reagente x")
 
     # Se a biomassa escolhida foi Palha da Cana-de-Açúcar
     if biomassa == "Palha da Cana-de-Açúcar":
