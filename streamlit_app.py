@@ -5,7 +5,7 @@ import pandas as pd
 st.set_page_config(layout="wide")
 
 # Título do app
-st.title('⚗️Ethanol AI (Software em desenvolvimento)')
+st.title('⚗️Ethanol AI (Software em desenvolvimento teste)')
 
 # Informação principal
 st.write("O Ethanol AI é uma ferramenta útil para estudar o comportamento de diferentes processos de produção de etanol de segunda geração, quando submetidos a diferentes condições operacionais. Aqui, você pode testar diferentes combinações de parâmetros de reação, encontrando essencialmente o rendimento máximo possível para cada situação.")
