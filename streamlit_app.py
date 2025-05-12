@@ -26,7 +26,7 @@ with col1:
     # Escolha das características do modelo
     st.header("Dados Iniciais")
     st.write("Informe os dados principais de sua simulação.")
-    biomassa = st.selectbox("Selecione um tipo de biomassa", ['Bagaço de Cana-de-Açúcar', 'Palha da Cana-de-Açúcar', 'Palha de milho'])
+    biomassa = st.selectbox("Selecione um tipo de biomassa", ['Bagaço de Cana-de-Açúcar', 'Palha da Cana-de-Açúcar'])
     pretratamento = st.selectbox("Selecione um tipo de Pré-Tratamento", ['Ácido/Básico', 'Explosão a Vapor', 'Organossolve'])
     celulose = st.number_input("Porcentagem de Celulose (0,00 - 100,00) (%)", min_value=0.0, max_value=100.0, format="%.2f")
     lignina = st.number_input("Porcentagem de Lignina (0,00 - 100,00) (%)", min_value=0.0, max_value=100.0, format="%.2f")
@@ -56,15 +56,6 @@ with col2:
         palha4 = st.selectbox("Parâmetro 4 - Palha Cana", options=["Opção 1", "Opção 2", "Opção 3"])
         palha5 = st.selectbox("Parâmetro 5 - Palha Cana", options=["Opção A", "Opção B", "Opção C"])
         palha6 = st.selectbox("Parâmetro 6 - Palha Cana", options=["Sim", "Não"])
-    
-    # Se a biomassa escolhida foi Palha de Milho
-    if biomassa == "Palha de milho":
-        milho1 = st.number_input("Parâmetro 1 - Milho")
-        milho2 = st.number_input("Parâmetro 2 - Milho")
-        milho3 = st.number_input("Parâmetro 3 - Milho")
-        milho4 = st.selectbox("Parâmetro 4 - Milho", options=["Opção 1", "Opção 2", "Opção 3"])
-        milho5 = st.selectbox("Parâmetro 5 - Milho", options=["Opção A", "Opção B", "Opção C"])
-        milho6 = st.selectbox("Parâmetro 6 - Milho", options=["Sim", "Não"])
 
 # Personalizando a coluna Resultados do Pré-Tratamento (col3)
 from plotly import graph_objs as go
@@ -81,12 +72,13 @@ with col3:
 
 st.markdown("<hr style='border: 1px solid #ccc;' />", unsafe_allow_html=True)
 
-# Etapa de Hidrólise
+# Próxima Etapa: Hidrólise
+
 st.markdown(
     "<h1 style='font-size:50px;'>Etapa de Hidrólise</h1>",
     unsafe_allow_html=True
 )
-
+st.write("Nesta seção, introduza os dados relevantes ao cálculo do redimento da Hidrólise.")
 # Criando colunas "Parâmetros" e "Resultados"
 col4, spacer3, col5, spacer4, col6 = st.columns([10, 2, 10, 2, 10])
 
