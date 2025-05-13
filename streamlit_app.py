@@ -13,7 +13,7 @@ st.markdown("<hr style='border: 1px solid #ccc;' />", unsafe_allow_html=True)
 
 # Etapa de Pré-Tratamento
 st.markdown(
-    "<h1 style='font-size:50px;'>Etapa de Pré-Tratamento</h1>",
+    "<h1 style='font-size:50px;'>Pré-Tratamento</h1>",
     unsafe_allow_html=True
 )
 st.write("Nesta seção, introduza os dados relevantes ao cálculo do redimento do Pré-Tratamento.")
@@ -197,7 +197,7 @@ st.markdown("<hr style='border: 1px solid #ccc;' />", unsafe_allow_html=True)
 # Próxima Etapa: Hidrólise
 
 st.markdown(
-    "<h1 style='font-size:50px;'>Etapa de Hidrólise</h1>",
+    "<h1 style='font-size:50px;'>Hidrólise</h1>",
     unsafe_allow_html=True
 )
 st.write("Nesta seção, introduza os dados relevantes ao cálculo do redimento da Hidrólise.")
