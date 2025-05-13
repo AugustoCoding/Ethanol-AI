@@ -1,5 +1,7 @@
 import streamlit as st
 import pandas as pd
+import pickle
+from plotly import graph_objs as go
 
 # Configurando o layout para modo "wide"
 st.set_page_config(layout="wide")
@@ -57,133 +59,84 @@ with col2:
         palha5 = st.selectbox("Parâmetro 5 - Palha Cana", options=["Opção A", "Opção B", "Opção C"])
         palha6 = st.selectbox("Parâmetro 6 - Palha Cana", options=["Sim", "Não"])
 
-
-# Selecionando o modelo de pré-tratamento
-
-import pickle
-
-if biomassa == "Bagaço de Cana-de-Açúcar" and pretratamento == "Ácido/Básico":
-
-    # Carregar o modelo de machine learning empacotado com pickle
-    try:
-        with open('modelo_pretratamento.pkl', 'rb') as file:
-            modelo = pickle.load(file)
-        
-        # Preparar os dados de entrada para o modelo
-        dados_entrada = [[bagaco1, bagaco2, bagaco3, int(bagaco4[-1]), int(bagaco5[-1]), int(bagaco6)]]
-        
-        # Fazer a previsão com o modelo carregado
-        rendimento_previsto = modelo.predict(dados_entrada)[0]
-        
-        # Exibir o resultado previsto
-        st.success(f"Rendimento previsto pelo modelo: {rendimento_previsto:.2f}%")
-    except FileNotFoundError:
-        st.error("O arquivo do modelo 'modelo_pretratamento.pkl' não foi encontrado.")
-    except Exception as e:
-        st.error(f"Ocorreu um erro ao carregar o modelo: {e}")
-
-if biomassa == "Palha da Cana-de-Açúcar" and pretratamento == "Ácido/Básico":
-    # Carregar o modelo de machine learning empacotado com pickle
-    try:
-        with open('modelo_pretratamento.pkl', 'rb') as file:
-            modelo = pickle.load(file)
-        
-        # Preparar os dados de entrada para o modelo
-        dados_entrada = [[palha1, palha2, palha3, int(palha4[-1]), int(palha5[-1]), int(palha6)]]
-        
-        # Fazer a previsão com o modelo carregado
-        rendimento_previsto = modelo.predict(dados_entrada)[0]
-        
-        # Exibir o resultado previsto
-        st.success(f"Rendimento previsto pelo modelo: {rendimento_previsto:.2f}%")
-    except FileNotFoundError:
-        st.error("O arquivo do modelo 'modelo_pretratamento.pkl' não foi encontrado.")
-    except Exception as e:
-        st.error(f"Ocorreu um erro ao carregar o modelo: {e}")
-
-if biomassa == "Bagaço de Cana-de-Açúcar" and pretratamento == "Explosão a Vapor":
-    # Carregar o modelo de machine learning empacotado com pickle
-    try:
-        with open('modelo_pretratamento.pkl', 'rb') as file:
-            modelo = pickle.load(file)
-        
-        # Preparar os dados de entrada para o modelo
-        dados_entrada = [[bagaco1, bagaco2, bagaco3, int(bagaco4[-1]), int(bagaco5[-1]), int(bagaco6)]]
-        
-        # Fazer a previsão com o modelo carregado
-        rendimento_previsto = modelo.predict(dados_entrada)[0]
-        
-        # Exibir o resultado previsto
-        st.success(f"Rendimento previsto pelo modelo: {rendimento_previsto:.2f}%")
-    except FileNotFoundError:
-        st.error("O arquivo do modelo 'modelo_pretratamento.pkl' não foi encontrado.")
-    except Exception as e:
-        st.error(f"Ocorreu um erro ao carregar o modelo: {e}")
-
-if biomassa == "Palha da Cana-de-Açúcar" and pretratamento == "Explosão a Vapor":
-    # Carregar o modelo de machine learning empacotado com pickle
-    try:
-        with open('modelo_pretratamento.pkl', 'rb') as file:
-            modelo = pickle.load(file)
-        
-        # Preparar os dados de entrada para o modelo
-        dados_entrada = [[palha1, palha2, palha3, int(palha4[-1]), int(palha5[-1]), int(palha6)]]
-        
-        # Fazer a previsão com o modelo carregado
-        rendimento_previsto = modelo.predict(dados_entrada)[0]
-        
-        # Exibir o resultado previsto
-        st.success(f"Rendimento previsto pelo modelo: {rendimento_previsto:.2f}%")
-    except FileNotFoundError:
-        st.error("O arquivo do modelo 'modelo_pretratamento.pkl' não foi encontrado.")
-    except Exception as e:
-        st.error(f"Ocorreu um erro ao carregar o modelo: {e}")
-
-if biomassa == "Bagaço de Cana-de-Açúcar" and pretratamento == "Organossolve":
-    # Carregar o modelo de machine learning empacotado com pickle
-    try:
-        with open('modelo_pretratamento.pkl', 'rb') as file:
-            modelo = pickle.load(file)
-        
-        # Preparar os dados de entrada para o modelo
-        dados_entrada = [[bagaco1, bagaco2, bagaco3, int(bagaco4[-1]), int(bagaco5[-1]), int(bagaco6)]]
-        
-        # Fazer a previsão com o modelo carregado
-        rendimento_previsto = modelo.predict(dados_entrada)[0]
-        
-        # Exibir o resultado previsto
-        st.success(f"Rendimento previsto pelo modelo: {rendimento_previsto:.2f}%")
-    except FileNotFoundError:
-        st.error("O arquivo do modelo 'modelo_pretratamento.pkl' não foi encontrado.")
-    except Exception as e:
-        st.error(f"Ocorreu um erro ao carregar o modelo: {e}")
-
-if biomassa == "Palha da Cana-de-Açúcar" and pretratamento == "Organossolve":
-    # Carregar o modelo de machine learning empacotado com pickle
-    try:
-        with open('modelo_pretratamento.pkl', 'rb') as file:
-            modelo = pickle.load(file)
-        
-        # Preparar os dados de entrada para o modelo
-        dados_entrada = [[palha1, palha2, palha3, int(palha4[-1]), int(palha5[-1]), int(palha6)]]
-        
-        # Fazer a previsão com o modelo carregado
-        rendimento_previsto = modelo.predict(dados_entrada)[0]
-        
-        # Exibir o resultado previsto
-        st.success(f"Rendimento previsto pelo modelo: {rendimento_previsto:.2f}%")
-    except FileNotFoundError:
-        st.error("O arquivo do modelo 'modelo_pretratamento.pkl' não foi encontrado.")
-    except Exception as e:
-        st.error(f"Ocorreu um erro ao carregar o modelo: {e}")
-
-
 # Personalizando a coluna Resultados do Pré-Tratamento (col3)
-from plotly import graph_objs as go
+
 with col3:
     st.header("Resultados do Pré-Tratamento")
     st.write(f"Aqui é possível ver os resultados obtidos para a etapa de Pré-Tratamento de {biomassa}. Alterne a disposição do gráfico para visualizar mais relações entre as variáveis.")
     st.button("Calcular Rendimento", key="pretratamento_resultados")
+    if st.session_state.get("pretratamento_resultados"):
+        if biomassa == "Bagaço de Cana-de-Açúcar" and pretratamento == "Ácido/Básico":
+            try:
+                with open('modelo_pretratamento.pkl', 'rb') as file:
+                    modelo = pickle.load(file)
+                dados_entrada = [[bagaco1, bagaco2, bagaco3, int(bagaco4[-1]), int(bagaco5[-1]), int(bagaco6)]]
+                rendimento_previsto = modelo.predict(dados_entrada)[0]
+                st.success(f"Rendimento previsto pelo modelo: {rendimento_previsto:.2f}%")
+            except FileNotFoundError:
+                st.error("O arquivo do modelo 'modelo_pretratamento.pkl' não foi encontrado.")
+            except Exception as e:
+                st.error(f"Ocorreu um erro ao carregar o modelo: {e}")
+
+        if biomassa == "Palha da Cana-de-Açúcar" and pretratamento == "Ácido/Básico":
+            try:
+                with open('modelo_pretratamento.pkl', 'rb') as file:
+                    modelo = pickle.load(file)
+                dados_entrada = [[palha1, palha2, palha3, int(palha4[-1]), int(palha5[-1]), int(palha6)]]
+                rendimento_previsto = modelo.predict(dados_entrada)[0]
+                st.success(f"Rendimento previsto pelo modelo: {rendimento_previsto:.2f}%")
+            except FileNotFoundError:
+                st.error("O arquivo do modelo 'modelo_pretratamento.pkl' não foi encontrado.")
+            except Exception as e:
+                st.error(f"Ocorreu um erro ao carregar o modelo: {e}")
+
+        if biomassa == "Bagaço de Cana-de-Açúcar" and pretratamento == "Explosão a Vapor":
+            try:
+                with open('modelo_pretratamento.pkl', 'rb') as file:
+                    modelo = pickle.load(file)
+                dados_entrada = [[bagaco1, bagaco2, bagaco3, int(bagaco4[-1]), int(bagaco5[-1]), int(bagaco6)]]
+                rendimento_previsto = modelo.predict(dados_entrada)[0]
+                st.success(f"Rendimento previsto pelo modelo: {rendimento_previsto:.2f}%")
+            except FileNotFoundError:
+                st.error("O arquivo do modelo 'modelo_pretratamento.pkl' não foi encontrado.")
+            except Exception as e:
+                st.error(f"Ocorreu um erro ao carregar o modelo: {e}")
+
+        if biomassa == "Palha da Cana-de-Açúcar" and pretratamento == "Explosão a Vapor":
+            try:
+                with open('modelo_pretratamento.pkl', 'rb') as file:
+                    modelo = pickle.load(file)
+                dados_entrada = [[palha1, palha2, palha3, int(palha4[-1]), int(palha5[-1]), int(palha6)]]
+                rendimento_previsto = modelo.predict(dados_entrada)[0]
+                st.success(f"Rendimento previsto pelo modelo: {rendimento_previsto:.2f}%")
+            except FileNotFoundError:
+                st.error("O arquivo do modelo 'modelo_pretratamento.pkl' não foi encontrado.")
+            except Exception as e:
+                st.error(f"Ocorreu um erro ao carregar o modelo: {e}")
+
+        if biomassa == "Bagaço de Cana-de-Açúcar" and pretratamento == "Organossolve":
+            try:
+                with open('modelo_pretratamento.pkl', 'rb') as file:
+                    modelo = pickle.load(file)
+                dados_entrada = [[bagaco1, bagaco2, bagaco3, int(bagaco4[-1]), int(bagaco5[-1]), int(bagaco6)]]
+                rendimento_previsto = modelo.predict(dados_entrada)[0]
+                st.success(f"Rendimento previsto pelo modelo: {rendimento_previsto:.2f}%")
+            except FileNotFoundError:
+                st.error("O arquivo do modelo 'modelo_pretratamento.pkl' não foi encontrado.")
+            except Exception as e:
+                st.error(f"Ocorreu um erro ao carregar o modelo: {e}")
+
+        if biomassa == "Palha da Cana-de-Açúcar" and pretratamento == "Organossolve":
+            try:
+                with open('modelo_pretratamento.pkl', 'rb') as file:
+                    modelo = pickle.load(file)
+                dados_entrada = [[palha1, palha2, palha3, int(palha4[-1]), int(palha5[-1]), int(palha6)]]
+                rendimento_previsto = modelo.predict(dados_entrada)[0]
+                st.success(f"Rendimento previsto pelo modelo: {rendimento_previsto:.2f}%")
+            except FileNotFoundError:
+                st.error("O arquivo do modelo 'modelo_pretratamento.pkl' não foi encontrado.")
+            except Exception as e:
+                st.error(f"Ocorreu um erro ao carregar o modelo: {e}")
     st.metric(label="🔍 **Rendimento Previsto (%)**", value= "86%", delta="+6%", help="Este é o rendimento previsto para as condições selecionadas.")
     # Criando um gráfico de exemplo
     fig = go.Figure(data=[go.Bar(x=['Categoria 1', 'Categoria 2', 'Categoria 3'], y=[10, 20, 30])])
@@ -250,6 +203,78 @@ with col6:
     st.header("Resultados da Hidrólise")
     st.write(f"Aqui é possível ver os resultados obtidos para a etapa de Hidrólise de {biomassa}. Alterne a disposição do gráfico para visualizar mais relações entre as variáveis.")
     st.button("Calcular Rendimento", key="hidrolise_resultados")
+    if st.session_state.get("hidrolise_resultados"):
+        if catalizador == "Tipo 1" and biomassa == "Bagaço de Cana-de-Açúcar":
+            try:
+                with open('modelo_hidrolise.pkl', 'rb') as file:
+                    modelo = pickle.load(file)
+                dados_entrada = [[bagaco11, bagaco21, bagaco31, int(bagaco41[-1]), int(bagaco51[-1]), int(bagaco61 == "Sim")]]
+                rendimento_previsto = modelo.predict(dados_entrada)[0]
+                st.success(f"Rendimento previsto pelo modelo: {rendimento_previsto:.2f}%")
+            except FileNotFoundError:
+                st.error("O arquivo do modelo 'modelo_hidrolise.pkl' não foi encontrado.")
+            except Exception as e:
+                st.error(f"Ocorreu um erro ao carregar o modelo: {e}")
+
+        if catalizador == "Tipo 1" and biomassa == "Palha da Cana-de-Açúcar":
+            try:
+                with open('modelo_hidrolise.pkl', 'rb') as file:
+                    modelo = pickle.load(file)
+                dados_entrada = [[bagaco11, bagaco21, bagaco31, int(bagaco41[-1]), int(bagaco51[-1]), int(bagaco61 == "Sim")]]
+                rendimento_previsto = modelo.predict(dados_entrada)[0]
+                st.success(f"Rendimento previsto pelo modelo: {rendimento_previsto:.2f}%")
+            except FileNotFoundError:
+                st.error("O arquivo do modelo 'modelo_hidrolise.pkl' não foi encontrado.")
+            except Exception as e:
+                st.error(f"Ocorreu um erro ao carregar o modelo: {e}")
+
+        if catalizador == "Tipo 2" and biomassa == "Bagaço de Cana-de-Açúcar":
+            try:
+                with open('modelo_hidrolise.pkl', 'rb') as file:
+                    modelo = pickle.load(file)
+                dados_entrada = [[palha11, palha21, palha31, int(palha41[-1]), int(palha51[-1]), int(palha61 == "Sim")]]
+                rendimento_previsto = modelo.predict(dados_entrada)[0]
+                st.success(f"Rendimento previsto pelo modelo: {rendimento_previsto:.2f}%")
+            except FileNotFoundError:
+                st.error("O arquivo do modelo 'modelo_hidrolise.pkl' não foi encontrado.")
+            except Exception as e:
+                st.error(f"Ocorreu um erro ao carregar o modelo: {e}")
+
+        if catalizador == "Tipo 2" and biomassa == "Palha da Cana-de-Açúcar":
+            try:
+                with open('modelo_hidrolise.pkl', 'rb') as file:
+                    modelo = pickle.load(file)
+                dados_entrada = [[palha11, palha21, palha31, int(palha41[-1]), int(palha51[-1]), int(palha61 == "Sim")]]
+                rendimento_previsto = modelo.predict(dados_entrada)[0]
+                st.success(f"Rendimento previsto pelo modelo: {rendimento_previsto:.2f}%")
+            except FileNotFoundError:
+                st.error("O arquivo do modelo 'modelo_hidrolise.pkl' não foi encontrado.")
+            except Exception as e:
+                st.error(f"Ocorreu um erro ao carregar o modelo: {e}")
+
+        if catalizador == "Tipo 3" and biomassa == "Bagaço de Cana-de-Açúcar":
+            try:
+                with open('modelo_hidrolise.pkl', 'rb') as file:
+                    modelo = pickle.load(file)
+                dados_entrada = [[milho11, milho21, milho31, int(milho41[-1]), int(milho51[-1]), int(milho61 == "Sim")]]
+                rendimento_previsto = modelo.predict(dados_entrada)[0]
+                st.success(f"Rendimento previsto pelo modelo: {rendimento_previsto:.2f}%")
+            except FileNotFoundError:
+                st.error("O arquivo do modelo 'modelo_hidrolise.pkl' não foi encontrado.")
+            except Exception as e:
+                st.error(f"Ocorreu um erro ao carregar o modelo: {e}")
+
+        if catalizador == "Tipo 3" and biomassa == "Palha da Cana-de-Açúcar":
+            try:
+                with open('modelo_hidrolise.pkl', 'rb') as file:
+                    modelo = pickle.load(file)
+                dados_entrada = [[milho11, milho21, milho31, int(milho41[-1]), int(milho51[-1]), int(milho61 == "Sim")]]
+                rendimento_previsto = modelo.predict(dados_entrada)[0]
+                st.success(f"Rendimento previsto pelo modelo: {rendimento_previsto:.2f}%")
+            except FileNotFoundError:
+                st.error("O arquivo do modelo 'modelo_hidrolise.pkl' não foi encontrado.")
+            except Exception as e:
+                st.error(f"Ocorreu um erro ao carregar o modelo: {e}")
     st.metric(label="🔍 **Rendimento Previsto (%)**", value= "91%", delta="+5%", help="Este é o rendimento previsto para as condições selecionadas.")
     # Criando um gráfico de exemplo
     fig1 = go.Figure(data=[go.Bar(x=['Categoria 1', 'Categoria 2', 'Categoria 3'], y=[10, 20, 30])])
