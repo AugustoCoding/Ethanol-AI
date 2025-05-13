@@ -169,34 +169,62 @@ with col4:
 # Personalizando a coluna Parâmetros da Hidrólise (col5)
 with col5:
     st.header("Parâmetros da Hidrólise")
-    st.write(f"Informe os parâmetros da hidrólise para definir a sua condição de operação de {biomassa}.")
+    st.write(f"Informe os parâmetros da hidrólise para definir a sua condição de operação de {biomassa} com o catalizador.")
     catalizador = st.selectbox("Catalizador", ['Tipo 1', 'Tipo 2', 'Tipo 3'])
-    # Se o catalizador utilizado foi Tipo 1
-    if catalizador == "Tipo 1":
+
+    # Se o catalizador utilizado foi Tipo 1 e a biomassa é Bagaço de Cana-de-Açúcar
+    if catalizador == "Tipo 1" and biomassa == "Bagaço de Cana-de-Açúcar":
         bagaco11 = st.number_input("Parâmetro 11 - Bagaço")
         bagaco21 = st.number_input("Parâmetro 21 - Bagaço")
         bagaco31 = st.number_input("Parâmetro 31 - Bagaço")
         bagaco41 = st.selectbox("Parâmetro 41 - Bagaço", options=["Opção 1", "Opção 2", "Opção 3"])
-        bagaco51 = st.selectbox("Parâmetro 51- Bagaço", options=["Opção A", "Opção B", "Opção C"])
+        bagaco51 = st.selectbox("Parâmetro 51 - Bagaço", options=["Opção A", "Opção B", "Opção C"])
         bagaco61 = st.selectbox("Parâmetro 61 - Bagaço", options=["Sim", "Não"])
 
-    # Se o catalizador utilizado foi Tipo 2
-    if catalizador == "Tipo 2":
+    # Se o catalizador utilizado foi Tipo 1 e a biomassa é Palha da Cana-de-Açúcar
+    if catalizador == "Tipo 1" and biomassa == "Palha da Cana-de-Açúcar":
         palha11 = st.number_input("Parâmetro 11 - Palha Cana")
         palha21 = st.number_input("Parâmetro 21 - Palha Cana")
         palha31 = st.number_input("Parâmetro 31 - Palha Cana")
-        palha41= st.selectbox("Parâmetro 41 - Palha Cana", options=["Opção 1", "Opção 2", "Opção 3"])
+        palha41 = st.selectbox("Parâmetro 41 - Palha Cana", options=["Opção 1", "Opção 2", "Opção 3"])
         palha51 = st.selectbox("Parâmetro 51 - Palha Cana", options=["Opção A", "Opção B", "Opção C"])
         palha61 = st.selectbox("Parâmetro 61 - Palha Cana", options=["Sim", "Não"])
-    
-    # Se o catalizador utilizado foi Tipo 3
-    if catalizador == "Tipo 3":
-        milho11 = st.number_input("Parâmetro 11 - Milho")
-        milho21 = st.number_input("Parâmetro 21 - Milho")
-        milho31 = st.number_input("Parâmetro 31 - Milho")
-        milho41 = st.selectbox("Parâmetro 41 - Milho", options=["Opção 1", "Opção 2", "Opção 3"])
-        milho51 = st.selectbox("Parâmetro 51 - Milho", options=["Opção A", "Opção B", "Opção C"])
-        milho61 = st.selectbox("Parâmetro 61 - Milho", options=["Sim", "Não"])
+
+    # Se o catalizador utilizado foi Tipo 2 e a biomassa é Bagaço de Cana-de-Açúcar
+    if catalizador == "Tipo 2" and biomassa == "Bagaço de Cana-de-Açúcar":
+        bagaco11 = st.number_input("Parâmetro 11 - Bagaço")
+        bagaco21 = st.number_input("Parâmetro 21 - Bagaço")
+        bagaco31 = st.number_input("Parâmetro 31 - Bagaço")
+        bagaco41 = st.selectbox("Parâmetro 41 - Bagaço", options=["Opção 1", "Opção 2", "Opção 3"])
+        bagaco51 = st.selectbox("Parâmetro 51 - Bagaço", options=["Opção A", "Opção B", "Opção C"])
+        bagaco61 = st.selectbox("Parâmetro 61 - Bagaço", options=["Sim", "Não"])
+
+    # Se o catalizador utilizado foi Tipo 2 e a biomassa é Palha da Cana-de-Açúcar
+    if catalizador == "Tipo 2" and biomassa == "Palha da Cana-de-Açúcar":
+        palha11 = st.number_input("Parâmetro 11 - Palha Cana")
+        palha21 = st.number_input("Parâmetro 21 - Palha Cana")
+        palha31 = st.number_input("Parâmetro 31 - Palha Cana")
+        palha41 = st.selectbox("Parâmetro 41 - Palha Cana", options=["Opção 1", "Opção 2", "Opção 3"])
+        palha51 = st.selectbox("Parâmetro 51 - Palha Cana", options=["Opção A", "Opção B", "Opção C"])
+        palha61 = st.selectbox("Parâmetro 61 - Palha Cana", options=["Sim", "Não"])
+
+    # Se o catalizador utilizado foi Tipo 3 e a biomassa é Bagaço de Cana-de-Açúcar
+    if catalizador == "Tipo 3" and biomassa == "Bagaço de Cana-de-Açúcar":
+        bagaco11 = st.number_input("Parâmetro 11 - Bagaço")
+        bagaco21 = st.number_input("Parâmetro 21 - Bagaço")
+        bagaco31 = st.number_input("Parâmetro 31 - Bagaço")
+        bagaco41 = st.selectbox("Parâmetro 41 - Bagaço", options=["Opção 1", "Opção 2", "Opção 3"])
+        bagaco51 = st.selectbox("Parâmetro 51 - Bagaço", options=["Opção A", "Opção B", "Opção C"])
+        bagaco61 = st.selectbox("Parâmetro 61 - Bagaço", options=["Sim", "Não"])
+
+    # Se o catalizador utilizado foi Tipo 3 e a biomassa é Palha da Cana-de-Açúcar
+    if catalizador == "Tipo 3" and biomassa == "Palha da Cana-de-Açúcar":
+        palha11 = st.number_input("Parâmetro 11 - Palha Cana")
+        palha21 = st.number_input("Parâmetro 21 - Palha Cana")
+        palha31 = st.number_input("Parâmetro 31 - Palha Cana")
+        palha41 = st.selectbox("Parâmetro 41 - Palha Cana", options=["Opção 1", "Opção 2", "Opção 3"])
+        palha51 = st.selectbox("Parâmetro 51 - Palha Cana", options=["Opção A", "Opção B", "Opção C"])
+        palha61 = st.selectbox("Parâmetro 61 - Palha Cana", options=["Sim", "Não"])
 
 # Personalizando a coluna Resultados da Hidrólise (col6)
 with col6:
@@ -220,7 +248,7 @@ with col6:
             try:
                 with open('modelo_hidrolise.pkl', 'rb') as file:
                     modelo = pickle.load(file)
-                dados_entrada = [[bagaco11, bagaco21, bagaco31, int(bagaco41[-1]), int(bagaco51[-1]), int(bagaco61 == "Sim")]]
+                dados_entrada = [[palha11, palha21, palha31, int(palha41[-1]), int(palha51[-1]), int(palha61 == "Sim")]]
                 rendimento_previsto = modelo.predict(dados_entrada)[0]
                 st.success(f"Rendimento previsto pelo modelo: {rendimento_previsto:.2f}%")
             except FileNotFoundError:
@@ -232,7 +260,7 @@ with col6:
             try:
                 with open('modelo_hidrolise.pkl', 'rb') as file:
                     modelo = pickle.load(file)
-                dados_entrada = [[palha11, palha21, palha31, int(palha41[-1]), int(palha51[-1]), int(palha61 == "Sim")]]
+                dados_entrada = [[bagaco11, bagaco21, bagaco31, int(bagaco41[-1]), int(bagaco51[-1]), int(bagaco61 == "Sim")]]
                 rendimento_previsto = modelo.predict(dados_entrada)[0]
                 st.success(f"Rendimento previsto pelo modelo: {rendimento_previsto:.2f}%")
             except FileNotFoundError:
@@ -256,26 +284,26 @@ with col6:
             try:
                 with open('modelo_hidrolise.pkl', 'rb') as file:
                     modelo = pickle.load(file)
-                dados_entrada = [[milho11, milho21, milho31, int(milho41[-1]), int(milho51[-1]), int(milho61 == "Sim")]]
+                dados_entrada = [[bagaco11, bagaco21, bagaco31, int(bagaco41[-1]), int(bagaco51[-1]), int(bagaco61 == "Sim")]]
                 rendimento_previsto = modelo.predict(dados_entrada)[0]
                 st.success(f"Rendimento previsto pelo modelo: {rendimento_previsto:.2f}%")
             except FileNotFoundError:
                 st.error("O arquivo do modelo 'modelo_hidrolise.pkl' não foi encontrado.")
             except Exception as e:
                 st.error(f"Ocorreu um erro ao carregar o modelo: {e}")
-
+                
         if catalizador == "Tipo 3" and biomassa == "Palha da Cana-de-Açúcar":
             try:
                 with open('modelo_hidrolise.pkl', 'rb') as file:
                     modelo = pickle.load(file)
-                dados_entrada = [[milho11, milho21, milho31, int(milho41[-1]), int(milho51[-1]), int(milho61 == "Sim")]]
+                dados_entrada = [[palha11, palha21, palha31, int(palha41[-1]), int(palha51[-1]), int(palha61 == "Sim")]]
                 rendimento_previsto = modelo.predict(dados_entrada)[0]
                 st.success(f"Rendimento previsto pelo modelo: {rendimento_previsto:.2f}%")
             except FileNotFoundError:
                 st.error("O arquivo do modelo 'modelo_hidrolise.pkl' não foi encontrado.")
             except Exception as e:
                 st.error(f"Ocorreu um erro ao carregar o modelo: {e}")
-    st.metric(label="🔍 **Rendimento Previsto (%)**", value= "91%", delta="+5%", help="Este é o rendimento previsto para as condições selecionadas.")
+    st.metric(label="🔍 **Rendimento Previsto (%)**", value="91%", delta="+5%", help="Este é o rendimento previsto para as condições selecionadas.")
     # Criando um gráfico de exemplo
     fig1 = go.Figure(data=[go.Bar(x=['Categoria 1', 'Categoria 2', 'Categoria 3'], y=[10, 20, 30])])
     fig1.update_layout(title="Exemplo de Gráfico", xaxis_title="Categorias", yaxis_title="Valores")
