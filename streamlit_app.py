@@ -3,6 +3,28 @@ import pandas as pd
 import pickle
 from plotly import graph_objs as go
 
+# Helper function to load model and make predictions
+def load_model_and_predict(model_path, input_data):
+    """
+    Load a pickle model and make predictions with error handling.
+    
+    Args:
+        model_path (str): Path to the pickle model file
+        input_data (list): Input data for prediction
+    
+    Returns:
+        tuple: (success, result) where success is bool and result is either prediction or error message
+    """
+    try:
+        with open(model_path, 'rb') as file:
+            modelo = pickle.load(file)
+        rendimento_previsto = modelo.predict(input_data)[0]
+        return True, rendimento_previsto
+    except FileNotFoundError:
+        return False, f"The model file '{model_path}' was not found."
+    except Exception as e:
+        return False, f"An error occurred while loading the model: {e}"
+
 # Configurando o layout para modo "wide"
 st.set_page_config(layout="wide")
 
@@ -118,81 +140,125 @@ with col2:
 with col3:
     st.header("Pre-Treatment Results")
     st.write(f"Here you can see the results obtained for the Pre-Treatment stage of {biomassa}. Change the chart layout to visualize more relationships between the variables.")
+    
+    # Validation function for pre-treatment inputs
+    def validate_pretreatment_inputs():
+        errors = []
+        
+        # Check if composition percentages sum to reasonable values
+        total_composition = celulose + lignina + hemicelulose + cinzas
+        if total_composition > 100:
+            errors.append("Total composition cannot exceed 100%")
+        elif total_composition < 50:
+            errors.append("Total composition seems too low (< 50%)")
+        
+        # Check if any composition is zero
+        if celulose == 0:
+            errors.append("Cellulose percentage must be greater than 0")
+        if lignina == 0:
+            errors.append("Lignin percentage must be greater than 0")
+        if hemicelulose == 0:
+            errors.append("Hemicellulose percentage must be greater than 0")
+        
+        return errors
+    
+    # Validation function for parameter inputs
+    def validate_parameter_inputs():
+        errors = []
+        
+        try:
+            if biomassa == "Sugarcane Bagasse":
+                if 'bagaco1' not in locals() and 'bagaco1' not in globals():
+                    errors.append("Please fill in all pre-treatment parameters")
+                elif globals().get('bagaco1', 0) <= 0 or globals().get('bagaco2', 0) <= 0 or globals().get('bagaco3', 0) <= 0:
+                    errors.append("All numeric parameters must be greater than 0")
+            elif biomassa == "Sugarcane Straw":
+                if 'palha1' not in locals() and 'palha1' not in globals():
+                    errors.append("Please fill in all pre-treatment parameters")
+                elif globals().get('palha1', 0) <= 0 or globals().get('palha2', 0) <= 0 or globals().get('palha3', 0) <= 0:
+                    errors.append("All numeric parameters must be greater than 0")
+        except:
+            errors.append("Please fill in all pre-treatment parameters")
+        
+        return errors
+    
     st.button("Calculate Yield", key="pretratamento_resultados")
     if st.session_state.get("pretratamento_resultados"):
-        if biomassa == "Sugarcane Bagasse" and (pretratamento == "Acid" or pretratamento == "Basic"):
-            try:
-                with open('modelo_pretratamento.pkl', 'rb') as file:
-                    modelo = pickle.load(file)
-                dados_entrada = [[bagaco1, bagaco2, bagaco3, int(bagaco4[-1]), int(bagaco5[-1]), int(bagaco6)]]
-                rendimento_previsto = modelo.predict(dados_entrada)[0]
-                st.success(f"Yield predicted by the model: {rendimento_previsto:.2f}%")
-            except FileNotFoundError:
-                st.error("The model file 'modelo_pretratamento.pkl' was not found.")
-            except Exception as e:
-                st.error(f"An error occurred while loading the model: {e}")
+        # Validate inputs before processing
+        composition_errors = validate_pretreatment_inputs()
+        parameter_errors = validate_parameter_inputs()
+        validation_errors = composition_errors + parameter_errors
+        
+        if validation_errors:
+            for error in validation_errors:
+                st.error(f"❌ {error}")
+            st.warning("Please correct the errors above before calculating the yield.")
+        else:
+            if biomassa == "Sugarcane Bagasse" and (pretratamento == "Acid" or pretratamento == "Basic"):
+                try:
+                    dados_entrada = [[bagaco1, bagaco2, bagaco3, int(bagaco4[-1]), int(bagaco5[-1]), int(bagaco6)]]
+                    sucesso, resultado = load_model_and_predict('modelo_pretratamento.pkl', dados_entrada)
+                    if sucesso:
+                        st.success(f"Yield predicted by the model: {resultado:.2f}%")
+                    else:
+                        st.error(resultado)
+                except Exception as e:
+                    st.error(f"An error occurred while processing: {e}")
 
-        if biomassa == "Sugarcane Straw" and (pretratamento == "Acid" or pretratamento == "Basic"):
-            try:
-                with open('modelo_pretratamento.pkl', 'rb') as file:
-                    modelo = pickle.load(file)
-                dados_entrada = [[palha1, palha2, palha3, int(palha4[-1]), int(palha5[-1]), int(palha6 == "Yes")]]
-                rendimento_previsto = modelo.predict(dados_entrada)[0]
-                st.success(f"Yield predicted by the model: {rendimento_previsto:.2f}%")
-            except FileNotFoundError:
-                st.error("The model file 'modelo_pretratamento.pkl' was not found.")
-            except Exception as e:
-                st.error(f"An error occurred while loading the model: {e}")
+            elif biomassa == "Sugarcane Straw" and (pretratamento == "Acid" or pretratamento == "Basic"):
+                try:
+                    dados_entrada = [[palha1, palha2, palha3, int(palha4[-1]), int(palha5[-1]), int(palha6 == "Yes")]]
+                    sucesso, resultado = load_model_and_predict('modelo_pretratamento.pkl', dados_entrada)
+                    if sucesso:
+                        st.success(f"Yield predicted by the model: {resultado:.2f}%")
+                    else:
+                        st.error(resultado)
+                except Exception as e:
+                    st.error(f"An error occurred while processing: {e}")
 
-        # Removing conditions for "Steam Explosion" that doesn't exist in the options
+            elif biomassa == "Sugarcane Bagasse" and pretratamento == "Organosolv":
+                try:
+                    dados_entrada = [[bagaco1, bagaco2, bagaco3, int(bagaco4[-1]), int(bagaco5[-1]), int(bagaco6)]]
+                    sucesso, resultado = load_model_and_predict('modelo_pretratamento.pkl', dados_entrada)
+                    if sucesso:
+                        st.success(f"Yield predicted by the model: {resultado:.2f}%")
+                    else:
+                        st.error(resultado)
+                except Exception as e:
+                    st.error(f"An error occurred while processing: {e}")
 
-        if biomassa == "Sugarcane Bagasse" and pretratamento == "Organosolv":
-            try:
-                with open('modelo_pretratamento.pkl', 'rb') as file:
-                    modelo = pickle.load(file)
-                dados_entrada = [[bagaco1, bagaco2, bagaco3, int(bagaco4[-1]), int(bagaco5[-1]), int(bagaco6)]]
-                rendimento_previsto = modelo.predict(dados_entrada)[0]
-                st.success(f"Yield predicted by the model: {rendimento_previsto:.2f}%")
-            except FileNotFoundError:
-                st.error("The model file 'modelo_pretratamento.pkl' was not found.")
-            except Exception as e:
-                st.error(f"An error occurred while loading the model: {e}")
+            elif biomassa == "Sugarcane Straw" and pretratamento == "Organosolv":
+                try:
+                    dados_entrada = [[palha1, palha2, palha3, int(palha4[-1]), int(palha5[-1]), int(palha6 == "Yes")]]
+                    sucesso, resultado = load_model_and_predict('modelo_pretratamento.pkl', dados_entrada)
+                    if sucesso:
+                        st.success(f"Yield predicted by the model: {resultado:.2f}%")
+                    else:
+                        st.error(resultado)
+                except Exception as e:
+                    st.error(f"An error occurred while processing: {e}")
 
-        elif biomassa == "Sugarcane Straw" and pretratamento == "Organosolv":
-            try:
-                with open('modelo_pretratamento.pkl', 'rb') as file:
-                    modelo = pickle.load(file)
-                dados_entrada = [[palha1, palha2, palha3, int(palha4[-1]), int(palha5[-1]), int(palha6 == "Yes")]]
-                rendimento_previsto = modelo.predict(dados_entrada)[0]
-                st.success(f"Yield predicted by the model: {rendimento_previsto:.2f}%")
-            except FileNotFoundError:
-                st.error("The model file 'modelo_pretratamento.pkl' was not found.")
-            except Exception as e:
-                st.error(f"An error occurred while loading the model: {e}")
+            elif biomassa == "Sugarcane Bagasse" and pretratamento == "Hydrothermal":
+                try:
+                    dados_entrada = [[bagaco1, bagaco2, bagaco3, int(bagaco4[-1]), int(bagaco5[-1]), int(bagaco6)]]
+                    sucesso, resultado = load_model_and_predict('modelo_pretratamento.pkl', dados_entrada)
+                    if sucesso:
+                        st.success(f"Yield predicted by the model: {resultado:.2f}%")
+                    else:
+                        st.error(resultado)
+                except Exception as e:
+                    st.error(f"An error occurred while processing: {e}")
 
-        elif biomassa == "Sugarcane Bagasse" and pretratamento == "Hydrothermal":
-            try:
-                with open('modelo_pretratamento.pkl', 'rb') as file:
-                    modelo = pickle.load(file)
-                dados_entrada = [[bagaco1, bagaco2, bagaco3, int(bagaco4[-1]), int(bagaco5[-1]), int(bagaco6)]]
-                rendimento_previsto = modelo.predict(dados_entrada)[0]
-                st.success(f"Yield predicted by the model: {rendimento_previsto:.2f}%")
-            except FileNotFoundError:
-                st.error("The model file 'modelo_pretratamento.pkl' was not found.")
-            except Exception as e:
-                st.error(f"An error occurred while loading the model: {e}")
-
-        elif biomassa == "Sugarcane Straw" and pretratamento == "Hydrothermal":
-            try:
-                with open('modelo_pretratamento.pkl', 'rb') as file:
-                    modelo = pickle.load(file)
-                dados_entrada = [[palha1, palha2, palha3, int(palha4[-1]), int(palha5[-1]), int(palha6 == "Yes")]]
-                rendimento_previsto = modelo.predict(dados_entrada)[0]
-                st.success(f"Yield predicted by the model: {rendimento_previsto:.2f}%")
-            except FileNotFoundError:
-                st.error("The model file 'modelo_pretratamento.pkl' was not found.")
-            except Exception as e:
-                st.error(f"An error occurred while loading the model: {e}")
+            elif biomassa == "Sugarcane Straw" and pretratamento == "Hydrothermal":
+                try:
+                    dados_entrada = [[palha1, palha2, palha3, int(palha4[-1]), int(palha5[-1]), int(palha6 == "Yes")]]
+                    sucesso, resultado = load_model_and_predict('modelo_pretratamento.pkl', dados_entrada)
+                    if sucesso:
+                        st.success(f"Yield predicted by the model: {resultado:.2f}%")
+                    else:
+                        st.error(resultado)
+                except Exception as e:
+                    st.error(f"An error occurred while processing: {e}")
     
     # Initialize rendimento_previsto to avoid undefined variable error
     rendimento_previsto = None
@@ -242,30 +308,73 @@ enzyme_types = {"Type 1": 1, "Type 2": 2, "Type 3": 3}
 with col6:
     st.header("Enzymatic Hydrolysis Results")
     st.write(f"Here you can see the results obtained for the Enzymatic Hydrolysis stage of {biomassa}. Change the chart layout to visualize more relationships between the variables.")
+    
+    # Validation function for enzymatic hydrolysis inputs
+    def validate_hydrolysis_inputs():
+        errors = []
+        
+        # Check if composition percentages sum to reasonable values
+        total_composition = celulose1 + lignina1 + hemicelulose1 + cinzas1
+        if total_composition > 100:
+            errors.append("Total composition cannot exceed 100%")
+        elif total_composition < 50:
+            errors.append("Total composition seems too low (< 50%)")
+        
+        # Check if any composition is zero (except ash which can be zero)
+        if celulose1 == 0:
+            errors.append("Cellulose percentage must be greater than 0")
+        if lignina1 == 0:
+            errors.append("Lignin percentage must be greater than 0")
+        if hemicelulose1 == 0:
+            errors.append("Hemicellulose percentage must be greater than 0")
+        
+        # Check if parameters are positive
+        if solid_loading <= 0:
+            errors.append("Initial Solids Loading must be greater than 0")
+        if enzyme_loading <= 0:
+            errors.append("Initial Enzyme Loading must be greater than 0")
+        
+        # Check for reasonable ranges
+        if solid_loading > 500:
+            errors.append("Initial Solids Loading seems too high (> 500 g/L)")
+        if enzyme_loading > 100:
+            errors.append("Initial Enzyme Loading seems too high (> 100 g/L)")
+        
+        return errors
+    
     st.button("Calculate Yield", key="hidrolise_resultados")
     
     # Initialize rendimento_previsto to avoid undefined variable error
     rendimento_previsto = None
     
     if st.session_state.get("hidrolise_resultados"):
-        try:
-            with open('modelo_hidrolise.pkl', 'rb') as file:
-                modelo = pickle.load(file)
-            
-            # Convert enzyme type to numerical value
-            enzyme_value = enzyme_types.get(enzyme, 1)
-            
-            # Convert biomass to numerical value (1 for Bagasse, 2 for Straw)
-            biomass_value = 1 if biomassa == "Sugarcane Bagasse" else 2
-            
-            # Create input data with simplified parameters
-            dados_entrada = [[celulose1, lignina1, hemicelulose1, cinzas1, solid_loading, enzyme_loading, enzyme_value, biomass_value]]
-            rendimento_previsto = modelo.predict(dados_entrada)[0]
-            st.success(f"Yield predicted by the model: {rendimento_previsto:.2f}%")
-        except FileNotFoundError:
-            st.error("The model file 'modelo_hidrolise.pkl' was not found.")
-        except Exception as e:
-            st.error(f"An error occurred while loading the model: {e}")
+        # Validate inputs before processing
+        validation_errors = validate_hydrolysis_inputs()
+        
+        if validation_errors:
+            for error in validation_errors:
+                st.error(f"❌ {error}")
+            st.warning("Please correct the errors above before calculating the yield.")
+        else:
+            try:
+                with open('modelo_hidrolise.pkl', 'rb') as file:
+                    modelo = pickle.load(file)
+                
+                # Convert enzyme type to numerical value
+                enzyme_value = enzyme_types.get(enzyme, 1)
+                
+                # Convert biomass to numerical value (1 for Bagasse, 2 for Straw)
+                biomass_value = 1 if biomassa == "Sugarcane Bagasse" else 2
+                
+                # Create input data with simplified parameters
+                dados_entrada = [[celulose1, lignina1, hemicelulose1, cinzas1, solid_loading, enzyme_loading, enzyme_value, biomass_value]]
+                sucesso, resultado = load_model_and_predict('modelo_hidrolise.pkl', dados_entrada)
+                if sucesso:
+                    st.success(f"Yield predicted by the model: {resultado:.2f}%")
+                else:
+                    st.error(resultado)
+            except Exception as e:
+                st.error(f"An error occurred while processing: {e}")
     st.metric(label="🔍 **Predicted Yield (%)**", value="91%", delta="+5%", help="This is the predicted yield for the selected conditions.")
     
     # Alteration 6: Replacing fixed charts with real data-based charts
