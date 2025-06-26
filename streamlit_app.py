@@ -220,76 +220,23 @@ col4, spacer3, col5, spacer4, col6 = st.columns([10, 2, 10, 2, 10])
 with col4:
     st.header("Pre-Treatment Data")
     st.write("Enter the data obtained from pre-treatment.")
-    celulose1 = st.number_input("Remaining Cellulose Percentage", min_value=0.0, max_value=100.0, format="%.2f")
-    lignina1 = st.number_input("Remaining Lignin Percentage", min_value=0.0, max_value=100.0, format="%.2f")
-    hemicelulose1 = st.number_input("Remaining Hemicellulose Percentage", min_value=0.0, max_value=100.0, format="%.2f")
-    cinzas1 = st.number_input("Remaining Ash Percentage", min_value=0.0, max_value=100.0, format="%.2f")
+    celulose1 = st.number_input("Cellulose Percentage", min_value=0.0, max_value=100.0, format="%.2f")
+    lignina1 = st.number_input("Lignin Percentage", min_value=0.0, max_value=100.0, format="%.2f")
+    hemicelulose1 = st.number_input("Hemicellulose Percentage", min_value=0.0, max_value=100.0, format="%.2f")
+    cinzas1 = st.number_input("Ash Percentage", min_value=0.0, max_value=100.0, format="%.2f")
 
 # Customizing the Hydrolysis Parameters column (col5)
 with col5:
     st.header("Hydrolysis Parameters")
-    st.write(f"Enter the hydrolysis parameters to define your operating condition for {biomassa} with the catalyst.")
-    catalizador = st.selectbox("Catalyst", ['Type 1', 'Type 2', 'Type 3'])
+    st.write(f"Enter the hydrolysis parameters to define your operating condition for {biomassa} with the enzyme.")
+    enzyme = st.selectbox("Enzyme", ['Type 1', 'Type 2', 'Type 3'])
+    
+    # Simplified parameters for all conditions
+    solid_loading = st.number_input("Initial Solids Loading (g/L)", min_value=0.0, format="%.2f")
+    enzyme_loading = st.number_input("Initial Enzyme Loading (g/L)", min_value=0.0, format="%.2f")
 
-    # If the catalyst used was Type 1 and the biomass is Sugarcane Bagasse
-    if catalizador == "Type 1" and biomassa == "Sugarcane Bagasse":
-        bagaco11 = st.number_input("Parameter 11 - Bagasse")
-        bagaco21 = st.number_input("Parameter 21 - Bagasse")
-        bagaco31 = st.number_input("Parameter 31 - Bagasse")
-        bagaco41 = st.selectbox("Parameter 41 - Bagasse", options=["Option 1", "Option 2", "Option 3"])
-        bagaco51 = st.selectbox("Parameter 51 - Bagasse", options=["Option A", "Option B", "Option C"])
-        bagaco61 = st.selectbox("Parameter 61 - Bagasse", options=["Yes", "No"])
-
-    # If the catalyst used was Type 1 and the biomass is Sugarcane Straw
-    if catalizador == "Type 1" and biomassa == "Sugarcane Straw":
-        palha11 = st.number_input("Parameter 11 - Straw")
-        palha21 = st.number_input("Parameter 21 - Straw")
-        palha31 = st.number_input("Parameter 31 - Straw")
-        palha41 = st.selectbox("Parameter 41 - Straw", options=["Option 1", "Option 2", "Option 3"])
-        palha51 = st.selectbox("Parameter 51 - Straw", options=["Option A", "Option B", "Option C"])
-        palha61 = st.selectbox("Parameter 61 - Straw", options=["Yes", "No"])
-
-    # If the catalyst used was Type 2 and the biomass is Sugarcane Bagasse
-    if catalizador == "Type 2" and biomassa == "Sugarcane Bagasse":
-        bagaco11 = st.number_input("Parameter 11 - Bagasse")
-        bagaco21 = st.number_input("Parameter 21 - Bagasse")
-        bagaco31 = st.number_input("Parameter 31 - Bagasse")
-        bagaco41 = st.selectbox("Parameter 41 - Bagasse", options=["Option 1", "Option 2", "Option 3"])
-        bagaco51 = st.selectbox("Parameter 51 - Bagasse", options=["Option A", "Option B", "Option C"])
-        bagaco61 = st.selectbox("Parameter 61 - Bagasse", options=["Yes", "No"])
-
-    # If the catalyst used was Type 2 and the biomass is Sugarcane Straw
-    if catalizador == "Type 2" and biomassa == "Sugarcane Straw":
-        palha11 = st.number_input("Parameter 11 - Straw")
-        palha21 = st.number_input("Parameter 21 - Straw")
-        palha31 = st.number_input("Parameter 31 - Straw")
-        palha41 = st.selectbox("Parameter 41 - Straw", options=["Option 1", "Option 2", "Option 3"])
-        palha51 = st.selectbox("Parameter 51 - Straw", options=["Option A", "Option B", "Option C"])
-        palha61 = st.selectbox("Parameter 61 - Straw", options=["Yes", "No"])
-
-    # If the catalyst used was Type 3 and the biomass is Sugarcane Bagasse
-    if catalizador == "Type 3" and biomassa == "Sugarcane Bagasse":
-        bagaco11 = st.number_input("Parameter 11 - Bagasse")
-        bagaco21 = st.number_input("Parameter 21 - Bagasse")
-        bagaco31 = st.number_input("Parameter 31 - Bagasse")
-        bagaco41 = st.selectbox("Parameter 41 - Bagasse", options=["Option 1", "Option 2", "Option 3"])
-        bagaco51 = st.selectbox("Parameter 51 - Bagasse", options=["Option A", "Option B", "Option C"])
-        bagaco61 = st.selectbox("Parameter 61 - Bagasse", options=["Yes", "No"])
-
-    # If the catalyst used was Type 3 and the biomass is Sugarcane Straw
-    if catalizador == "Type 3" and biomassa == "Sugarcane Straw":
-        palha11 = st.number_input("Parameter 11 - Straw")
-        palha21 = st.number_input("Parameter 21 - Straw")
-        palha31 = st.number_input("Parameter 31 - Straw")
-        palha41 = st.selectbox("Parameter 41 - Straw", options=["Option 1", "Option 2", "Option 3"])
-        palha51 = st.selectbox("Parameter 51 - Straw", options=["Option A", "Option B", "Option C"])
-        palha61 = st.selectbox("Parameter 61 - Straw", options=["Yes", "No"])
-
-# Alteration 3: Mapping selection options to numerical values before using them
-opcoes_bagaco41 = {"Option 1": 1, "Option 2": 2, "Option 3": 3}
-opcoes_bagaco51 = {"Option A": 1, "Option B": 2, "Option C": 3}
-opcoes_palha41 = {"Option 1": 1, "Option 2": 2, "Option 3": 3}
-opcoes_palha51 = {"Option A": 1, "Option B": 2, "Option C": 3}
+# Alteration 3: Mapping selection options to numerical values before using them (no longer needed for simplified version)
+enzyme_types = {"Type 1": 1, "Type 2": 2, "Type 3": 3}
 
 # Customizing the Hydrolysis Results column (col6)
 with col6:
@@ -301,89 +248,24 @@ with col6:
     rendimento_previsto = None
     
     if st.session_state.get("hidrolise_resultados"):
-        if catalizador == "Type 1" and biomassa == "Sugarcane Bagasse":
-            try:
-                with open('modelo_hidrolise.pkl', 'rb') as file:
-                    modelo = pickle.load(file)
-                bagaco41_valor = opcoes_bagaco41.get(bagaco41, 0)
-                bagaco51_valor = opcoes_bagaco51.get(bagaco51, 0)
-                dados_entrada = [[bagaco11, bagaco21, bagaco31, bagaco41_valor, bagaco51_valor, int(bagaco61 == "Yes")]]
-                rendimento_previsto = modelo.predict(dados_entrada)[0]
-                st.success(f"Yield predicted by the model: {rendimento_previsto:.2f}%")
-            except FileNotFoundError:
-                st.error("The model file 'modelo_hidrolise.pkl' was not found.")
-            except Exception as e:
-                st.error(f"An error occurred while loading the model: {e}")
-
-        elif catalizador == "Type 1" and biomassa == "Sugarcane Straw":
-            try:
-                with open('modelo_hidrolise.pkl', 'rb') as file:
-                    modelo = pickle.load(file)
-                palha41_valor = opcoes_palha41.get(palha41, 0)
-                palha51_valor = opcoes_palha51.get(palha51, 0)
-                dados_entrada = [[palha11, palha21, palha31, palha41_valor, palha51_valor, int(palha61 == "Yes")]]
-                rendimento_previsto = modelo.predict(dados_entrada)[0]
-                st.success(f"Yield predicted by the model: {rendimento_previsto:.2f}%")
-            except FileNotFoundError:
-                st.error("The model file 'modelo_hidrolise.pkl' was not found.")
-            except Exception as e:
-                st.error(f"An error occurred while loading the model: {e}")
-
-        elif catalizador == "Type 2" and biomassa == "Sugarcane Bagasse":
-            try:
-                with open('modelo_hidrolise.pkl', 'rb') as file:
-                    modelo = pickle.load(file)
-                bagaco41_valor = opcoes_bagaco41.get(bagaco41, 0)
-                bagaco51_valor = opcoes_bagaco51.get(bagaco51, 0)
-                dados_entrada = [[bagaco11, bagaco21, bagaco31, bagaco41_valor, bagaco51_valor, int(bagaco61 == "Yes")]]
-                rendimento_previsto = modelo.predict(dados_entrada)[0]
-                st.success(f"Yield predicted by the model: {rendimento_previsto:.2f}%")
-            except FileNotFoundError:
-                st.error("The model file 'modelo_hidrolise.pkl' was not found.")
-            except Exception as e:
-                st.error(f"An error occurred while loading the model: {e}")
-
-        elif catalizador == "Type 2" and biomassa == "Sugarcane Straw":
-            try:
-                with open('modelo_hidrolise.pkl', 'rb') as file:
-                    modelo = pickle.load(file)
-                palha41_valor = opcoes_palha41.get(palha41, 0)
-                palha51_valor = opcoes_palha51.get(palha51, 0)
-                dados_entrada = [[palha11, palha21, palha31, palha41_valor, palha51_valor, int(palha61 == "Yes")]]
-                rendimento_previsto = modelo.predict(dados_entrada)[0]
-                st.success(f"Yield predicted by the model: {rendimento_previsto:.2f}%")
-            except FileNotFoundError:
-                st.error("The model file 'modelo_hidrolise.pkl' was not found.")
-            except Exception as e:
-                st.error(f"An error occurred while loading the model: {e}")
-
-        elif catalizador == "Type 3" and biomassa == "Sugarcane Bagasse":
-            try:
-                with open('modelo_hidrolise.pkl', 'rb') as file:
-                    modelo = pickle.load(file)
-                bagaco41_valor = opcoes_bagaco41.get(bagaco41, 0)
-                bagaco51_valor = opcoes_bagaco51.get(bagaco51, 0)
-                dados_entrada = [[bagaco11, bagaco21, bagaco31, bagaco41_valor, bagaco51_valor, int(bagaco61 == "Yes")]]
-                rendimento_previsto = modelo.predict(dados_entrada)[0]
-                st.success(f"Yield predicted by the model: {rendimento_previsto:.2f}%")
-            except FileNotFoundError:
-                st.error("The model file 'modelo_hidrolise.pkl' was not found.")
-            except Exception as e:
-                st.error(f"An error occurred while loading the model: {e}")
-                
-        elif catalizador == "Type 3" and biomassa == "Sugarcane Straw":
-            try:
-                with open('modelo_hidrolise.pkl', 'rb') as file:
-                    modelo = pickle.load(file)
-                palha41_valor = opcoes_palha41.get(palha41, 0)
-                palha51_valor = opcoes_palha51.get(palha51, 0)
-                dados_entrada = [[palha11, palha21, palha31, palha41_valor, palha51_valor, int(palha61 == "Yes")]]
-                rendimento_previsto = modelo.predict(dados_entrada)[0]
-                st.success(f"Yield predicted by the model: {rendimento_previsto:.2f}%")
-            except FileNotFoundError:
-                st.error("The model file 'modelo_hidrolise.pkl' was not found.")
-            except Exception as e:
-                st.error(f"An error occurred while loading the model: {e}")
+        try:
+            with open('modelo_hidrolise.pkl', 'rb') as file:
+                modelo = pickle.load(file)
+            
+            # Convert enzyme type to numerical value
+            enzyme_value = enzyme_types.get(enzyme, 1)
+            
+            # Convert biomass to numerical value (1 for Bagasse, 2 for Straw)
+            biomass_value = 1 if biomassa == "Sugarcane Bagasse" else 2
+            
+            # Create input data with simplified parameters
+            dados_entrada = [[celulose1, lignina1, hemicelulose1, cinzas1, solid_loading, enzyme_loading, enzyme_value, biomass_value]]
+            rendimento_previsto = modelo.predict(dados_entrada)[0]
+            st.success(f"Yield predicted by the model: {rendimento_previsto:.2f}%")
+        except FileNotFoundError:
+            st.error("The model file 'modelo_hidrolise.pkl' was not found.")
+        except Exception as e:
+            st.error(f"An error occurred while loading the model: {e}")
     st.metric(label="🔍 **Predicted Yield (%)**", value="91%", delta="+5%", help="This is the predicted yield for the selected conditions.")
     
     # Alteration 6: Replacing fixed charts with real data-based charts
