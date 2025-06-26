@@ -206,13 +206,13 @@ with col3:
 
 st.markdown("<hr style='border: 1px solid #ccc;' />", unsafe_allow_html=True)
 
-# Next Stage: Hydrolysis
+# Next Stage: Enzymatic Hydrolysis
 
 st.markdown(
-    "<h1 style='font-size:50px;'>Hydrolysis</h1>",
+    "<h1 style='font-size:50px;'>Enzymatic Hydrolysis</h1>",
     unsafe_allow_html=True
 )
-st.write("In this section, introduce the relevant data for calculating the yield of Hydrolysis.")
+st.write("In this section, introduce the relevant data for calculating the yield of Enzymatic Hydrolysis.")
 # Creating "Parameters" and "Results" columns
 col4, spacer3, col5, spacer4, col6 = st.columns([10, 2, 10, 2, 10])
 
@@ -225,10 +225,10 @@ with col4:
     hemicelulose1 = st.number_input("Hemicellulose Percentage", min_value=0.0, max_value=100.0, format="%.2f")
     cinzas1 = st.number_input("Ash Percentage", min_value=0.0, max_value=100.0, format="%.2f")
 
-# Customizing the Hydrolysis Parameters column (col5)
+# Customizing the Enzymatic Hydrolysis Parameters column (col5)
 with col5:
-    st.header("Hydrolysis Parameters")
-    st.write(f"Enter the hydrolysis parameters to define your operating condition for {biomassa} with the enzyme.")
+    st.header("Enzymatic Hydrolysis Parameters")
+    st.write(f"Enter the enzymatic hydrolysis parameters to define your operating condition for {biomassa} with the enzyme.")
     enzyme = st.selectbox("Enzyme", ['Type 1', 'Type 2', 'Type 3'])
     
     # Simplified parameters for all conditions
@@ -238,10 +238,10 @@ with col5:
 # Alteration 3: Mapping selection options to numerical values before using them (no longer needed for simplified version)
 enzyme_types = {"Type 1": 1, "Type 2": 2, "Type 3": 3}
 
-# Customizing the Hydrolysis Results column (col6)
+# Customizing the Enzymatic Hydrolysis Results column (col6)
 with col6:
-    st.header("Hydrolysis Results")
-    st.write(f"Here you can see the results obtained for the Hydrolysis stage of {biomassa}. Change the chart layout to visualize more relationships between the variables.")
+    st.header("Enzymatic Hydrolysis Results")
+    st.write(f"Here you can see the results obtained for the Enzymatic Hydrolysis stage of {biomassa}. Change the chart layout to visualize more relationships between the variables.")
     st.button("Calculate Yield", key="hidrolise_resultados")
     
     # Initialize rendimento_previsto to avoid undefined variable error
@@ -272,5 +272,5 @@ with col6:
     # Example of updated chart with real data
     if rendimento_previsto:
         fig1 = go.Figure(data=[go.Bar(x=['Cellulose', 'Lignin', 'Hemicellulose'], y=[celulose1, lignina1, hemicelulose1])])
-        fig1.update_layout(title="Composition after Hydrolysis", xaxis_title="Components", yaxis_title="Percentage (%)")
+        fig1.update_layout(title="Composition after Enzymatic Hydrolysis", xaxis_title="Components", yaxis_title="Percentage (%)")
         st.plotly_chart(fig1, key="hidrolise_grafico")
