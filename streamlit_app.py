@@ -7,18 +7,18 @@ from plotly import graph_objs as go
 st.set_page_config(layout="wide")
 
 # Título do app
-st.title('⚗️Ethanol AI (Software em desenvolvimento)')
+st.title('⚗️Ethanol AI (Software under development)')
 
 # Informação principal
-st.write("O Ethanol AI é uma ferramenta útil para estudar o comportamento de diferentes processos de produção de etanol de segunda geração, quando submetidos a diferentes condições operacionais. Aqui, você pode testar diferentes combinações de parâmetros de reação, encontrando essencialmente o rendimento máximo possível para cada situação.")
+st.write("Ethanol AI is a tool created within a research program called scientific initiation by researchers from UFSCar and DTU with funding from FAPESP. It is particularly useful for studying the behavior of different second-generation ethanol production processes when subjected to various operating conditions. This software implements hybrid machine learning models, previously trained using knowledge generated from previous research works at UFSCar and abroad, to predict the outcomes. Here, you can test different combinations of initial conditions, essentially finding the maximum possible yield for each situation.")
 st.markdown("<hr style='border: 1px solid #ccc;' />", unsafe_allow_html=True)
 
 # Etapa de Pré-Tratamento
 st.markdown(
-    "<h1 style='font-size:50px;'>Pré-Tratamento</h1>",
+    "<h1 style='font-size:50px;'>Pre-Treatment</h1>",
     unsafe_allow_html=True
 )
-st.write("Nesta seção, introduza os dados relevantes ao cálculo do redimento do Pré-Tratamento.")
+st.write("In this section, introduce the relevant data for calculating the yield of the Pre-Treatment.")
 
 # Criando colunas "Parâmetros" e "Resultados"
 col1, spacer, col2, spacer2, col3 = st.columns([10, 2, 10, 2, 10])
