@@ -3,7 +3,6 @@
 
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
 from scipy.integrate import odeint
 
 def simulate_hydrothermal_degradation(temperature, solid_loading, cellulose_fraction, hemicellulose_fraction, time_final):
@@ -145,48 +144,29 @@ def simulate_hydrothermal_degradation(temperature, solid_loading, cellulose_frac
         "time_final": time_final
     }
 
-def create_hydrothermal_plot(results, show_plot=True):
+def create_hydrothermal_plot_data(results):
     """
-    Cria um gráfico da degradação hidrotérmica.
+    Prepara os dados da degradação hidrotérmica para plotagem.
     
     Args:
         results (dict): Resultados da simulação
-        show_plot (bool): Se deve mostrar o gráfico ou apenas retornar a figura
     
     Returns:
-        matplotlib.figure.Figure: Figura do gráfico
+        dict: Dados formatados para plotagem
     """
     
-    fig, ax = plt.subplots(figsize=(10, 6))
-    
-    # Plotar celulose e hemicelulose
-    ax.plot(results["time"], results["cellulose"], 'b-', linewidth=3, 
-            label='Celulose', marker='o', markersize=4, alpha=0.7)
-    ax.plot(results["time"], results["hemicellulose"], 'g-', linewidth=3, 
-            label='Hemicelulose', marker='s', markersize=4, alpha=0.7)
-
-    # Configurações do gráfico
-    ax.set_title(f'Degradação Hidrotérmica a {results["temperature"]}°C\n'
-                f'Carga de sólidos: {results["solid_loading"]} g/L', 
-                fontsize=14, fontweight='bold')
-    ax.set_xlabel('Tempo (min)', fontsize=12)
-    ax.set_ylabel('Concentração (g/L)', fontsize=12)
-    ax.legend(fontsize=12)
-    ax.grid(True, alpha=0.3)
-
-    # Adicionar anotações com valores finais
-    ax.text(0.02, 0.98, f'Degradação em {results["time_final"]} min:\n'
-                        f'Celulose: {results["cellulose_degraded_percent"]:.1f}%\n'
-                        f'Hemicelulose: {results["hemicellulose_degraded_percent"]:.1f}%', 
-            transform=ax.transAxes, fontsize=10, verticalalignment='top',
-            bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.8))
-
-    plt.tight_layout()
-    
-    if show_plot:
-        plt.show()
-    
-    return fig
+    return {
+        "time": results["time"].tolist(),
+        "cellulose": results["cellulose"].tolist(),
+        "hemicellulose": results["hemicellulose"].tolist(),
+        "title": f'Degradação Hidrotérmica a {results["temperature"]}°C',
+        "subtitle": f'Carga de sólidos: {results["solid_loading"]} g/L',
+        "degradation_info": {
+            "cellulose_percent": results["cellulose_degraded_percent"],
+            "hemicellulose_percent": results["hemicellulose_degraded_percent"],
+            "time_final": results["time_final"]
+        }
+    }
 
 # Função auxiliar para converter string de temperatura para número
 def parse_temperature(temp_str):
@@ -203,17 +183,20 @@ def parse_temperature(temp_str):
         return int(temp_str.replace("°C", ""))
     return int(temp_str)
 
-# Exemplo de uso (pode ser removido se não for necessário)
+# Exemplo de uso para teste local (remova em produção)
 if __name__ == "__main__":
-    # Teste da função
-    results = simulate_hydrothermal_degradation(
-        temperature=195,
-        solid_loading=100,
-        cellulose_fraction=0.348,
-        hemicellulose_fraction=0.230,
-        time_final=40
-    )
-    
-    print("Teste da função realizado com sucesso!")
-    print(f"Degradação da celulose: {results['cellulose_degraded_percent']:.1f}%")
-    print(f"Degradação da hemicelulose: {results['hemicellulose_degraded_percent']:.1f}%")
+    try:
+        # Teste da função
+        results = simulate_hydrothermal_degradation(
+            temperature=195,
+            solid_loading=100,
+            cellulose_fraction=0.348,
+            hemicellulose_fraction=0.230,
+            time_final=40
+        )
+        
+        print("Teste da função realizado com sucesso!")
+        print(f"Degradação da celulose: {results['cellulose_degraded_percent']:.1f}%")
+        print(f"Degradação da hemicelulose: {results['hemicellulose_degraded_percent']:.1f}%")
+    except Exception as e:
+        print(f"Erro no teste: {e}")
