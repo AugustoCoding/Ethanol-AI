@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import pickle
 from plotly import graph_objs as go
+from Hydrothermal_Pretreatment import simulate_hydrothermal_degradation
 
 # Helper function to load model and make predictions
 def load_model_and_predict(model_path, input_data):
@@ -55,6 +56,7 @@ with col1:
     celulose = st.number_input("Cellulose Percentage (0.00 - 100.00) (%)", min_value=0.0, max_value=100.0, format="%.2f")
     lignina = st.number_input("Lignin Percentage (0.00 - 100.00) (%)", min_value=0.0, max_value=100.0, format="%.2f")
     hemicelulose = st.number_input("Hemicellulose Percentage (0.00 - 100.00) (%)", min_value=0.0, max_value=100.0, format="%.2f")
+    extrativos = st.number_input("Extractives Percentage (0.00 - 100.00) (%)", min_value=0.0, max_value=100.0, format="%.2f")
     cinzas = st.number_input("Ash Percentage (0.00 - 100.00) (%)", min_value=0.0, max_value=100.0, format="%.2f")
 
 # Customizing the Pre-Treatment Parameters column (col2)
@@ -128,148 +130,19 @@ with col2:
 
     # If the chosen biomass was Sugarcane Straw and the pre-treatment is Hydrothermal
     if biomassa == "Sugarcane Straw" and pretratamento == "Hydrothermal":
-        palha1 = st.number_input("Parameter 1 - Straw (Hydrothermal)")
-        palha2 = st.number_input("Parameter 2 - Straw (Hydrothermal)")
-        palha3 = st.number_input("Parameter 3 - Straw (Hydrothermal)")
-        palha4 = st.selectbox("Parameter 4 - Straw (Hydrothermal)", options=["Option 1", "Option 2", "Option 3"])
-        palha5 = st.selectbox("Parameter 5 - Straw (Hydrothermal)", options=["Option A", "Option B", "Option C"])
-        palha6 = st.selectbox("Parameter 6 - Straw (Hydrothermal)", options=["Yes", "No"])
+        palha1 = st.number_input("Solid Loading [g/L]")
+        palha2 = st.selectbox("Temperature (°C)", options=["180°C", "195°C", "210°C"])
+        palha3 = st.slider("Time (min)", min_value=0.0, max_value=120.0, value=15, step=0.1, format="%.2f")
 
 # Customizing the Pre-Treatment Results column (col3)
 
 with col3:
     st.header("Pre-Treatment Results")
-    st.write(f"Here you can see the results obtained for the Pre-Treatment stage of {biomassa}. Change the chart layout to visualize more relationships between the variables.")
+    st.write(f"Here you can see the results obtained for the {pretratamento} Pretreatment stage of {biomassa}. Change the chart layout to visualize more relationships between the variables.")
     
-    # Validation function for pre-treatment inputs
-    def validate_pretreatment_inputs():
-        errors = []
-        
-        # Check if composition percentages sum to reasonable values
-        total_composition = celulose + lignina + hemicelulose + cinzas
-        if total_composition > 100:
-            errors.append("Total composition cannot exceed 100%")
-        elif total_composition < 50:
-            errors.append("Total composition seems too low (< 50%)")
-        
-        # Check if any composition is zero
-        if celulose == 0:
-            errors.append("Cellulose percentage must be greater than 0")
-        if lignina == 0:
-            errors.append("Lignin percentage must be greater than 0")
-        if hemicelulose == 0:
-            errors.append("Hemicellulose percentage must be greater than 0")
-        
-        return errors
+    def select_model():
+        return 0
     
-    # Validation function for parameter inputs
-    def validate_parameter_inputs():
-        errors = []
-        
-        try:
-            if biomassa == "Sugarcane Bagasse":
-                if 'bagaco1' not in locals() and 'bagaco1' not in globals():
-                    errors.append("Please fill in all pre-treatment parameters")
-                elif globals().get('bagaco1', 0) <= 0 or globals().get('bagaco2', 0) <= 0 or globals().get('bagaco3', 0) <= 0:
-                    errors.append("All numeric parameters must be greater than 0")
-            elif biomassa == "Sugarcane Straw":
-                if 'palha1' not in locals() and 'palha1' not in globals():
-                    errors.append("Please fill in all pre-treatment parameters")
-                elif globals().get('palha1', 0) <= 0 or globals().get('palha2', 0) <= 0 or globals().get('palha3', 0) <= 0:
-                    errors.append("All numeric parameters must be greater than 0")
-        except:
-            errors.append("Please fill in all pre-treatment parameters")
-        
-        return errors
-    
-    st.button("Calculate Yield", key="pretratamento_resultados")
-    if st.session_state.get("pretratamento_resultados"):
-        # Validate inputs before processing
-        composition_errors = validate_pretreatment_inputs()
-        parameter_errors = validate_parameter_inputs()
-        validation_errors = composition_errors + parameter_errors
-        
-        if validation_errors:
-            for error in validation_errors:
-                st.error(f"❌ {error}")
-            st.warning("Please correct the errors above before calculating the yield.")
-        else:
-            if biomassa == "Sugarcane Bagasse" and (pretratamento == "Acid" or pretratamento == "Basic"):
-                try:
-                    dados_entrada = [[bagaco1, bagaco2, bagaco3, int(bagaco4[-1]), int(bagaco5[-1]), int(bagaco6)]]
-                    sucesso, resultado = load_model_and_predict('modelo_pretratamento.pkl', dados_entrada)
-                    if sucesso:
-                        st.success(f"Yield predicted by the model: {resultado:.2f}%")
-                    else:
-                        st.error(resultado)
-                except Exception as e:
-                    st.error(f"An error occurred while processing: {e}")
-
-            elif biomassa == "Sugarcane Straw" and (pretratamento == "Acid" or pretratamento == "Basic"):
-                try:
-                    dados_entrada = [[palha1, palha2, palha3, int(palha4[-1]), int(palha5[-1]), int(palha6 == "Yes")]]
-                    sucesso, resultado = load_model_and_predict('modelo_pretratamento.pkl', dados_entrada)
-                    if sucesso:
-                        st.success(f"Yield predicted by the model: {resultado:.2f}%")
-                    else:
-                        st.error(resultado)
-                except Exception as e:
-                    st.error(f"An error occurred while processing: {e}")
-
-            elif biomassa == "Sugarcane Bagasse" and pretratamento == "Organosolv":
-                try:
-                    dados_entrada = [[bagaco1, bagaco2, bagaco3, int(bagaco4[-1]), int(bagaco5[-1]), int(bagaco6)]]
-                    sucesso, resultado = load_model_and_predict('modelo_pretratamento.pkl', dados_entrada)
-                    if sucesso:
-                        st.success(f"Yield predicted by the model: {resultado:.2f}%")
-                    else:
-                        st.error(resultado)
-                except Exception as e:
-                    st.error(f"An error occurred while processing: {e}")
-
-            elif biomassa == "Sugarcane Straw" and pretratamento == "Organosolv":
-                try:
-                    dados_entrada = [[palha1, palha2, palha3, int(palha4[-1]), int(palha5[-1]), int(palha6 == "Yes")]]
-                    sucesso, resultado = load_model_and_predict('modelo_pretratamento.pkl', dados_entrada)
-                    if sucesso:
-                        st.success(f"Yield predicted by the model: {resultado:.2f}%")
-                    else:
-                        st.error(resultado)
-                except Exception as e:
-                    st.error(f"An error occurred while processing: {e}")
-
-            elif biomassa == "Sugarcane Bagasse" and pretratamento == "Hydrothermal":
-                try:
-                    dados_entrada = [[bagaco1, bagaco2, bagaco3, int(bagaco4[-1]), int(bagaco5[-1]), int(bagaco6)]]
-                    sucesso, resultado = load_model_and_predict('modelo_pretratamento.pkl', dados_entrada)
-                    if sucesso:
-                        st.success(f"Yield predicted by the model: {resultado:.2f}%")
-                    else:
-                        st.error(resultado)
-                except Exception as e:
-                    st.error(f"An error occurred while processing: {e}")
-
-            elif biomassa == "Sugarcane Straw" and pretratamento == "Hydrothermal":
-                try:
-                    dados_entrada = [[palha1, palha2, palha3, int(palha4[-1]), int(palha5[-1]), int(palha6 == "Yes")]]
-                    sucesso, resultado = load_model_and_predict('modelo_pretratamento.pkl', dados_entrada)
-                    if sucesso:
-                        st.success(f"Yield predicted by the model: {resultado:.2f}%")
-                    else:
-                        st.error(resultado)
-                except Exception as e:
-                    st.error(f"An error occurred while processing: {e}")
-    
-    # Initialize rendimento_previsto to avoid undefined variable error
-    rendimento_previsto = None
-    st.metric(label="🔍 **Predicted Yield (%)**", value= "86%", delta="+6%", help="This is the predicted yield for the selected conditions.")
-    # Creating an example chart
-    fig = go.Figure(data=[go.Bar(x=['Category 1', 'Category 2', 'Category 3'], y=[10, 20, 30])])
-    fig.update_layout(title="Example Chart", xaxis_title="Categories", yaxis_title="Values")
-    
-    # Displaying the chart
-    st.plotly_chart(fig, key = "pretratamento_grafico")
-
 st.markdown("<hr style='border: 1px solid #ccc;' />", unsafe_allow_html=True)
 
 # Next Stage: Enzymatic Hydrolysis
