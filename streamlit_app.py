@@ -130,9 +130,9 @@ with col2:
 
     # If the chosen biomass was Sugarcane Straw and the pre-treatment is Hydrothermal
     if biomassa == "Sugarcane Straw" and pretratamento == "Hydrothermal":
-        palha1 = st.number_input("Solid Loading [g/L]")
-        palha2 = st.selectbox("Temperature (°C)", options=["180°C", "195°C", "210°C"])
-        palha3 = st.slider("Time (min)", min_value=0.0, max_value=120.0, value=15, step=0.1, format="%.2f")
+        solid_loading_hydro = st.number_input("Solid Loading [g/L]", min_value=1.0, max_value=500.0, value=100.0)
+        temperature_hydro = st.selectbox("Temperature (°C)", options=[180, 195, 210])
+        time_hydro = st.slider("Time (min)", min_value=1.0, max_value=120.0, value=15.0, step=0.1, format="%.1f")
 
 # Customizing the Pre-Treatment Results column (col3)
 
@@ -140,8 +140,90 @@ with col3:
     st.header("Pre-Treatment Results")
     st.write(f"Here you can see the results obtained for the {pretratamento} Pretreatment stage of {biomassa}. Change the chart layout to visualize more relationships between the variables.")
     
-    def select_model():
-        return 0
+    # Special handling for Hydrothermal pretreatment
+    if pretratamento == "Hydrothermal" and biomassa == "Sugarcane Straw":
+        if st.button("Calculate Hydrothermal Degradation", key="hydrothermal_calc"):
+            try:
+                # Convert percentages to fractions
+                cellulose_frac = celulose / 100.0
+                hemicellulose_frac = hemicelulose / 100.0
+                
+                # Run simulation
+                results = simulate_hydrothermal_degradation(
+                    temperature=temperature_hydro,
+                    solid_loading=solid_loading_hydro,
+                    cellulose_fraction=cellulose_frac,
+                    hemicellulose_fraction=hemicellulose_frac,
+                    time_final=time_hydro
+                )
+                
+                # Display results
+                st.success("Simulation completed successfully!")
+                
+                col_a, col_b = st.columns(2)
+                
+                with col_a:
+                    st.metric(
+                        label="Cellulose Degradation",
+                        value=f"{results['cellulose_degraded_percent']:.1f}%",
+                        help="Percentage of cellulose degraded during pretreatment"
+                    )
+                    st.metric(
+                        label="Final Cellulose",
+                        value=f"{results['final_cellulose']:.1f} g/L",
+                        help="Remaining cellulose concentration"
+                    )
+                
+                with col_b:
+                    st.metric(
+                        label="Hemicellulose Degradation",
+                        value=f"{results['hemicellulose_degraded_percent']:.1f}%",
+                        help="Percentage of hemicellulose degraded during pretreatment"
+                    )
+                    st.metric(
+                        label="Final Hemicellulose",
+                        value=f"{results['final_hemicellulose']:.1f} g/L",
+                        help="Remaining hemicellulose concentration"
+                    )
+                
+                # Create and display plot
+                fig = go.Figure()
+                
+                fig.add_trace(go.Scatter(
+                    x=results["time"],
+                    y=results["cellulose"],
+                    mode='lines+markers',
+                    name='Cellulose',
+                    line=dict(color='blue', width=3),
+                    marker=dict(size=4)
+                ))
+                
+                fig.add_trace(go.Scatter(
+                    x=results["time"],
+                    y=results["hemicellulose"],
+                    mode='lines+markers',
+                    name='Hemicellulose',
+                    line=dict(color='green', width=3),
+                    marker=dict(size=4)
+                ))
+                
+                fig.update_layout(
+                    title=f'Hydrothermal Degradation at {temperature_hydro}°C',
+                    xaxis_title='Time (min)',
+                    yaxis_title='Concentration (g/L)',
+                    hovermode='x unified'
+                )
+                
+                st.plotly_chart(fig, use_container_width=True)
+                
+            except Exception as e:
+                st.error(f"Error in simulation: {str(e)}")
+                st.info("Please check your input parameters and try again.")
+    
+    else:
+        # For other pretreatment types, keep the original placeholder
+        def select_model():
+            return 0
     
 st.markdown("<hr style='border: 1px solid #ccc;' />", unsafe_allow_html=True)
 
