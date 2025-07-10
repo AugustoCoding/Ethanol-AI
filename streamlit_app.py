@@ -61,78 +61,119 @@ with col1:
 
 # Customizing the Pre-Treatment Parameters column (col2)
 with col2:
-    
     st.header("Pre-Treatment Parameters")
     st.write(f"Enter the pre-treatment parameters for {biomassa}.")
     
-    # If the chosen biomass was Sugarcane Bagasse and the pre-treatment is Acid
-    if biomassa == "Sugarcane Bagasse" and pretratamento == "Acid":
-        bagaco1 = st.number_input("Parameter 1 - Bagasse (Acid)")
-        bagaco2 = st.number_input("Parameter 2 - Bagasse (Acid)")
-        bagaco3 = st.number_input("Parameter 3 - Bagasse (Acid)")
-        bagaco4 = st.selectbox("Parameter 4 - Bagasse (Acid)", options=["Option 1", "Option 2", "Option 3"])
-        bagaco5 = st.selectbox("Parameter 5 - Bagasse (Acid)", options=["Option A", "Option B", "Option C"])
-        bagaco6 = st.checkbox("Presence of reagent x (Acid)")
-
-    # If the chosen biomass was Sugarcane Bagasse and the pre-treatment is Basic
-    if biomassa == "Sugarcane Bagasse" and pretratamento == "Basic":
-        bagaco1 = st.number_input("Parameter 1 - Bagasse (Basic)")
-        bagaco2 = st.number_input("Parameter 2 - Bagasse (Basic)")
-        bagaco3 = st.number_input("Parameter 3 - Bagasse (Basic)")
-        bagaco4 = st.selectbox("Parameter 4 - Bagasse (Basic)", options=["Option 1", "Option 2", "Option 3"])
-        bagaco5 = st.selectbox("Parameter 5 - Bagasse (Basic)", options=["Option A", "Option B", "Option C"])
-        bagaco6 = st.checkbox("Presence of reagent x (Basic)")
-
-    # If the chosen biomass was Sugarcane Straw and the pre-treatment is Acid
-    if biomassa == "Sugarcane Straw" and pretratamento == "Acid":
-        palha1 = st.number_input("Parameter 1 - Straw (Acid)")
-        palha2 = st.number_input("Parameter 2 - Straw (Acid)")
-        palha3 = st.number_input("Parameter 3 - Straw (Acid)")
-        palha4 = st.selectbox("Parameter 4 - Straw (Acid)", options=["Option 1", "Option 2", "Option 3"])
-        palha5 = st.selectbox("Parameter 5 - Straw (Acid)", options=["Option A", "Option B", "Option C"])
-        palha6 = st.selectbox("Parameter 6 - Straw (Acid)", options=["Yes", "No"])
-
-    # If the chosen biomass was Sugarcane Straw and the pre-treatment is Basic
-    if biomassa == "Sugarcane Straw" and pretratamento == "Basic":
-        palha1 = st.number_input("Parameter 1 - Straw (Basic)")
-        palha2 = st.number_input("Parameter 2 - Straw (Basic)")
-        palha3 = st.number_input("Parameter 3 - Straw (Basic)")
-        palha4 = st.selectbox("Parameter 4 - Straw (Basic)", options=["Option 1", "Option 2", "Option 3"])
-        palha5 = st.selectbox("Parameter 5 - Straw (Basic)", options=["Option A", "Option B", "Option C"])
-        palha6 = st.selectbox("Parameter 6 - Straw (Basic)", options=["Yes", "No"])
+    # Configuration dictionary for different combinations
+    parameter_configs = {
+        ("Sugarcane Bagasse", "Acid"): {
+            "params": [
+                {"name": "Temperature (°C)", "type": "number", "min": 120, "max": 200, "value": 160},
+                {"name": "Acid Concentration (%)", "type": "number", "min": 0.5, "max": 5.0, "value": 2.0},
+                {"name": "Time (min)", "type": "number", "min": 10, "max": 120, "value": 60},
+                {"name": "Acid Type", "type": "selectbox", "options": ["H2SO4", "HCl", "HNO3"]},
+                {"name": "Pressure (bar)", "type": "selectbox", "options": ["Atmospheric", "2 bar", "5 bar"]},
+                {"name": "Catalyst Present", "type": "checkbox"}
+            ]
+        },
+        ("Sugarcane Bagasse", "Basic"): {
+            "params": [
+                {"name": "Temperature (°C)", "type": "number", "min": 80, "max": 180, "value": 120},
+                {"name": "Base Concentration (%)", "type": "number", "min": 1.0, "max": 10.0, "value": 4.0},
+                {"name": "Time (min)", "type": "number", "min": 30, "max": 180, "value": 90},
+                {"name": "Base Type", "type": "selectbox", "options": ["NaOH", "KOH", "Ca(OH)2"]},
+                {"name": "Mixing Speed", "type": "selectbox", "options": ["Low", "Medium", "High"]},
+                {"name": "Oxygen Present", "type": "checkbox"}
+            ]
+        },
+        ("Sugarcane Bagasse", "Organosolv"): {
+            "params": [
+                {"name": "Temperature (°C)", "type": "number", "min": 150, "max": 220, "value": 180},
+                {"name": "Ethanol Concentration (%)", "type": "number", "min": 40, "max": 80, "value": 60},
+                {"name": "Time (min)", "type": "number", "min": 30, "max": 150, "value": 75},
+                {"name": "Catalyst", "type": "selectbox", "options": ["H2SO4", "HCl", "Formic Acid"]},
+                {"name": "Liquid/Solid Ratio", "type": "selectbox", "options": ["5:1", "10:1", "15:1"]},
+                {"name": "Acid Added", "type": "checkbox"}
+            ]
+        },
+        ("Sugarcane Bagasse", "Hydrothermal"): {
+            "params": [
+                {"name": "Temperature (°C)", "type": "selectbox", "options": [180, 195, 210]},
+                {"name": "Solid Loading (g/L)", "type": "number", "min": 50, "max": 200, "value": 100},
+                {"name": "Time (min)", "type": "slider", "min": 10, "max": 120, "value": 40},
+                {"name": "pH", "type": "selectbox", "options": ["Natural", "Acidic", "Basic"]},
+                {"name": "Pressure", "type": "selectbox", "options": ["Autogenous", "Controlled"]},
+                {"name": "Stirring", "type": "checkbox"}
+            ]
+        },
+        ("Sugarcane Straw", "Hydrothermal"): {
+            "params": [
+                {"name": "Solid Loading (g/L)", "type": "number", "min": 1.0, "max": 500.0, "value": 100.0},
+                {"name": "Temperature (°C)", "type": "selectbox", "options": [180, 195, 210]},
+                {"name": "Time (min)", "type": "slider", "min": 1.0, "max": 120.0, "value": 15.0, "step": 0.1}
+            ]
+        }
+    }
     
-    # If the chosen biomass was Sugarcane Bagasse and the pre-treatment is Organosolv
-    if biomassa == "Sugarcane Bagasse" and pretratamento == "Organosolv":
-        bagaco1 = st.number_input("Parameter 1 - Bagasse (Organosolv)")
-        bagaco2 = st.number_input("Parameter 2 - Bagasse (Organosolv)")
-        bagaco3 = st.number_input("Parameter 3 - Bagasse (Organosolv)")
-        bagaco4 = st.selectbox("Parameter 4 - Bagasse (Organosolv)", options=["Option 1", "Option 2", "Option 3"])
-        bagaco5 = st.selectbox("Parameter 5 - Bagasse (Organosolv)", options=["Option A", "Option B", "Option C"])
-        bagaco6 = st.checkbox("Presence of reagent x (Organosolv)")
-
-    # If the chosen biomass was Sugarcane Bagasse and the pre-treatment is Hydrothermal
-    if biomassa == "Sugarcane Bagasse" and pretratamento == "Hydrothermal":
-        bagaco1 = st.number_input("Parameter 1 - Bagasse (Hydrothermal)")
-        bagaco2 = st.number_input("Parameter 2 - Bagasse (Hydrothermal)")
-        bagaco3 = st.number_input("Parameter 3 - Bagasse (Hydrothermal)")
-        bagaco4 = st.selectbox("Parameter 4 - Bagasse (Hydrothermal)", options=["Option 1", "Option 2", "Option 3"])
-        bagaco5 = st.selectbox("Parameter 5 - Bagasse (Hydrothermal)", options=["Option A", "Option B", "Option C"])
-        bagaco6 = st.checkbox("Presence of reagent x (Hydrothermal)")
-
-    # If the chosen biomass was Sugarcane Straw and the pre-treatment is Organosolv
-    if biomassa == "Sugarcane Straw" and pretratamento == "Organosolv":
-        palha1 = st.number_input("Parameter 1 - Straw (Organosolv)")
-        palha2 = st.number_input("Parameter 2 - Straw (Organosolv)")
-        palha3 = st.number_input("Parameter 3 - Straw (Organosolv)")
-        palha4 = st.selectbox("Parameter 4 - Straw (Organosolv)", options=["Option 1", "Option 2", "Option 3"])
-        palha5 = st.selectbox("Parameter 5 - Straw (Organosolv)", options=["Option A", "Option B", "Option C"])
-        palha6 = st.selectbox("Parameter 6 - Straw (Organosolv)", options=["Yes", "No"])
-
-    # If the chosen biomass was Sugarcane Straw and the pre-treatment is Hydrothermal
-    if biomassa == "Sugarcane Straw" and pretratamento == "Hydrothermal":
-        solid_loading_hydro = st.number_input("Solid Loading [g/L]", min_value=1.0, max_value=500.0, value=100.0)
-        temperature_hydro = st.selectbox("Temperature (°C)", options=[180, 195, 210])
-        time_hydro = st.slider("Time (min)", min_value=1.0, max_value=120.0, value=15.0, step=0.1, format="%.1f")
+    # Default configuration for combinations not specifically defined
+    default_config = {
+        "params": [
+            {"name": "Temperature (°C)", "type": "number", "min": 100, "max": 250, "value": 150},
+            {"name": "Concentration (%)", "type": "number", "min": 1.0, "max": 10.0, "value": 5.0},
+            {"name": "Time (min)", "type": "number", "min": 30, "max": 180, "value": 60},
+            {"name": "Reagent Type", "type": "selectbox", "options": ["Type A", "Type B", "Type C"]},
+            {"name": "Process Mode", "type": "selectbox", "options": ["Batch", "Continuous", "Semi-batch"]},
+            {"name": "Catalyst Present", "type": "checkbox"}
+        ]
+    }
+    
+    # Get configuration for current combination
+    current_config = parameter_configs.get((biomassa, pretratamento), default_config)
+    
+    # Store parameters in session state to access later
+    if 'pretreatment_params' not in st.session_state:
+        st.session_state.pretreatment_params = {}
+    
+    # Generate UI elements based on configuration
+    for i, param in enumerate(current_config["params"]):
+        param_key = f"{biomassa}_{pretratamento}_{param['name']}"
+        
+        if param["type"] == "number":
+            value = st.number_input(
+                param["name"],
+                min_value=param.get("min", 0.0),
+                max_value=param.get("max", 1000.0),
+                value=param.get("value", 0.0),
+                format="%.2f",
+                key=param_key
+            )
+        elif param["type"] == "selectbox":
+            value = st.selectbox(
+                param["name"],
+                options=param["options"],
+                key=param_key
+            )
+        elif param["type"] == "slider":
+            value = st.slider(
+                param["name"],
+                min_value=param.get("min", 0.0),
+                max_value=param.get("max", 100.0),
+                value=param.get("value", 50.0),
+                step=param.get("step", 1.0),
+                format="%.1f",
+                key=param_key
+            )
+        elif param["type"] == "checkbox":
+            value = st.checkbox(param["name"], key=param_key)
+        
+        # Store in session state
+        st.session_state.pretreatment_params[param["name"]] = value
+    
+    # Special handling for Hydrothermal (backward compatibility)
+    if pretratamento == "Hydrothermal" and biomassa == "Sugarcane Straw":
+        solid_loading_hydro = st.session_state.pretreatment_params.get("Solid Loading (g/L)", 100.0)
+        temperature_hydro = st.session_state.pretreatment_params.get("Temperature (°C)", 195)
+        time_hydro = st.session_state.pretreatment_params.get("Time (min)", 15.0)
 
 # Customizing the Pre-Treatment Results column (col3)
 
