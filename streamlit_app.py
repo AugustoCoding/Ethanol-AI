@@ -283,39 +283,6 @@ with col6:
     st.header("Enzymatic Hydrolysis Results")
     st.write(f"Here you can see the results obtained for the Enzymatic Hydrolysis stage of {biomassa}. Change the chart layout to visualize more relationships between the variables.")
     
-    # Validation function for enzymatic hydrolysis inputs
-    def validate_hydrolysis_inputs():
-        errors = []
-        
-        # Check if composition percentages sum to reasonable values
-        total_composition = celulose1 + lignina1 + hemicelulose1 + cinzas1
-        if total_composition > 100:
-            errors.append("Total composition cannot exceed 100%")
-        elif total_composition < 50:
-            errors.append("Total composition seems too low (< 50%)")
-        
-        # Check if any composition is zero (except ash which can be zero)
-        if celulose1 == 0:
-            errors.append("Cellulose percentage must be greater than 0")
-        if lignina1 == 0:
-            errors.append("Lignin percentage must be greater than 0")
-        if hemicelulose1 == 0:
-            errors.append("Hemicellulose percentage must be greater than 0")
-        
-        # Check if parameters are positive
-        if solid_loading <= 0:
-            errors.append("Initial Solids Loading must be greater than 0")
-        if enzyme_loading <= 0:
-            errors.append("Initial Enzyme Loading must be greater than 0")
-        
-        # Check for reasonable ranges
-        if solid_loading > 500:
-            errors.append("Initial Solids Loading seems too high (> 500 g/L)")
-        if enzyme_loading > 100:
-            errors.append("Initial Enzyme Loading seems too high (> 100 g/L)")
-        
-        return errors
-    
     st.button("Calculate Yield", key="hidrolise_resultados")
     
     # Placeholder for enzymatic hydrolysis model
@@ -336,41 +303,26 @@ with col6:
         return predicted_yield
     
     if st.session_state.get("hidrolise_resultados"):
-        # Validate inputs before processing
-        validation_errors = validate_hydrolysis_inputs()
-        
-        if validation_errors:
-            for error in validation_errors:
-                st.error(f"❌ {error}")
-            st.warning("Please correct the errors above before calculating the yield.")
-        else:
-            try:
-                # Convert enzyme type to numerical value
-                enzyme_value = enzyme_types.get(enzyme, 1)
-                
-                # Convert biomass to numerical value (1 for Bagasse, 2 for Straw)
-                biomass_value = 1 if biomassa == "Sugarcane Bagasse" else 2
-                
-                # Use the placeholder function (replace with actual model import)
-                predicted_yield = predict_enzymatic_hydrolysis(
-                    celulose1, lignina1, hemicelulose1, cinzas1, 
-                    solid_loading, enzyme_loading, enzyme_value, biomass_value
-                )
-                
-                st.success(f"Yield predicted by the model: {predicted_yield:.2f}%")
-                
-                # Store result for chart
-                rendimento_previsto = predicted_yield
-                
-            except Exception as e:
-                st.error(f"An error occurred while processing: {e}")
+        try:
+            # Convert enzyme type to numerical value
+            enzyme_value = enzyme_types.get(enzyme, 1)
+            
+            # Convert biomass to numerical value (1 for Bagasse, 2 for Straw)
+            biomass_value = 1 if biomassa == "Sugarcane Bagasse" else 2
+            
+            # Use the placeholder function (replace with actual model import)
+            predicted_yield = predict_enzymatic_hydrolysis(
+                celulose1, lignina1, hemicelulose1, cinzas1, 
+                solid_loading, enzyme_loading, enzyme_value, biomass_value
+            )
+            
+            st.success(f"Yield predicted by the model: {predicted_yield:.2f}%")
+            
+            # Store result for chart
+            rendimento_previsto = predicted_yield
+            
+        except Exception as e:
+            st.error(f"An error occurred while processing: {e}")
     else:
         rendimento_previsto = None
-    st.metric(label="🔍 **Predicted Yield (%)**", value="91%", delta="+5%", help="This is the predicted yield for the selected conditions.")
-    
-    # Alteration 6: Replacing fixed charts with real data-based charts
-    # Example of updated chart with real data
-    if rendimento_previsto:
-        fig1 = go.Figure(data=[go.Bar(x=['Cellulose', 'Lignin', 'Hemicellulose'], y=[celulose1, lignina1, hemicelulose1])])
-        fig1.update_layout(title="Composition after Enzymatic Hydrolysis", xaxis_title="Components", yaxis_title="Percentage (%)")
-        st.plotly_chart(fig1, key="hidrolise_grafico")
+
