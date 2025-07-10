@@ -45,9 +45,9 @@ with col2:
     parameter_configs = {
         ("Sugarcane Bagasse", "Acid"): {
             "params": [
-                {"name": "Temperature (°C)", "type": "number", "min": 120, "max": 200, "value": 160},
+                {"name": "Temperature (°C)", "type": "number", "min": 120.0, "max": 200.0, "value": 160.0},
                 {"name": "Acid Concentration (%)", "type": "number", "min": 0.5, "max": 5.0, "value": 2.0},
-                {"name": "Time (min)", "type": "number", "min": 10, "max": 120, "value": 60},
+                {"name": "Time (min)", "type": "number", "min": 10.0, "max": 120.0, "value": 60.0},
                 {"name": "Acid Type", "type": "selectbox", "options": ["H2SO4", "HCl", "HNO3"]},
                 {"name": "Pressure (bar)", "type": "selectbox", "options": ["Atmospheric", "2 bar", "5 bar"]},
                 {"name": "Catalyst Present", "type": "checkbox"}
@@ -55,9 +55,9 @@ with col2:
         },
         ("Sugarcane Bagasse", "Basic"): {
             "params": [
-                {"name": "Temperature (°C)", "type": "number", "min": 80, "max": 180, "value": 120},
+                {"name": "Temperature (°C)", "type": "number", "min": 80.0, "max": 180.0, "value": 120.0},
                 {"name": "Base Concentration (%)", "type": "number", "min": 1.0, "max": 10.0, "value": 4.0},
-                {"name": "Time (min)", "type": "number", "min": 30, "max": 180, "value": 90},
+                {"name": "Time (min)", "type": "number", "min": 30.0, "max": 180.0, "value": 90.0},
                 {"name": "Base Type", "type": "selectbox", "options": ["NaOH", "KOH", "Ca(OH)2"]},
                 {"name": "Mixing Speed", "type": "selectbox", "options": ["Low", "Medium", "High"]},
                 {"name": "Oxygen Present", "type": "checkbox"}
@@ -65,9 +65,9 @@ with col2:
         },
         ("Sugarcane Bagasse", "Organosolv"): {
             "params": [
-                {"name": "Temperature (°C)", "type": "number", "min": 150, "max": 220, "value": 180},
-                {"name": "Ethanol Concentration (%)", "type": "number", "min": 40, "max": 80, "value": 60},
-                {"name": "Time (min)", "type": "number", "min": 30, "max": 150, "value": 75},
+                {"name": "Temperature (°C)", "type": "number", "min": 150.0, "max": 220.0, "value": 180.0},
+                {"name": "Ethanol Concentration (%)", "type": "number", "min": 40.0, "max": 80.0, "value": 60.0},
+                {"name": "Time (min)", "type": "number", "min": 30.0, "max": 150.0, "value": 75.0},
                 {"name": "Catalyst", "type": "selectbox", "options": ["H2SO4", "HCl", "Formic Acid"]},
                 {"name": "Liquid/Solid Ratio", "type": "selectbox", "options": ["5:1", "10:1", "15:1"]},
                 {"name": "Acid Added", "type": "checkbox"}
@@ -76,8 +76,8 @@ with col2:
         ("Sugarcane Bagasse", "Hydrothermal"): {
             "params": [
                 {"name": "Temperature (°C)", "type": "selectbox", "options": [180, 195, 210]},
-                {"name": "Solid Loading (g/L)", "type": "number", "min": 50, "max": 200, "value": 100},
-                {"name": "Time (min)", "type": "slider", "min": 10, "max": 120, "value": 40},
+                {"name": "Solid Loading (g/L)", "type": "number", "min": 50.0, "max": 200.0, "value": 100.0},
+                {"name": "Time (min)", "type": "slider", "min": 10.0, "max": 120.0, "value": 40.0},
                 {"name": "pH", "type": "selectbox", "options": ["Natural", "Acidic", "Basic"]},
                 {"name": "Pressure", "type": "selectbox", "options": ["Autogenous", "Controlled"]},
                 {"name": "Stirring", "type": "checkbox"}
@@ -95,9 +95,9 @@ with col2:
     # Default configuration for combinations not specifically defined
     default_config = {
         "params": [
-            {"name": "Temperature (°C)", "type": "number", "min": 100, "max": 250, "value": 150},
+            {"name": "Temperature (°C)", "type": "number", "min": 100.0, "max": 250.0, "value": 150.0},
             {"name": "Concentration (%)", "type": "number", "min": 1.0, "max": 10.0, "value": 5.0},
-            {"name": "Time (min)", "type": "number", "min": 30, "max": 180, "value": 60},
+            {"name": "Time (min)", "type": "number", "min": 30.0, "max": 180.0, "value": 60.0},
             {"name": "Reagent Type", "type": "selectbox", "options": ["Type A", "Type B", "Type C"]},
             {"name": "Process Mode", "type": "selectbox", "options": ["Batch", "Continuous", "Semi-batch"]},
             {"name": "Catalyst Present", "type": "checkbox"}
@@ -116,11 +116,16 @@ with col2:
         param_key = f"{biomassa}_{pretratamento}_{param['name']}"
         
         if param["type"] == "number":
+            # Ensure all values are float for consistent display
+            min_val = float(param.get("min", 0.0))
+            max_val = float(param.get("max", 1000.0))
+            default_val = float(param.get("value", 0.0))
+            
             value = st.number_input(
                 param["name"],
-                min_value=param.get("min", 0.0),
-                max_value=param.get("max", 1000.0),
-                value=param.get("value", 0.0),
+                min_value=min_val,
+                max_value=max_val,
+                value=default_val,
                 format="%.2f",
                 key=param_key
             )
@@ -131,12 +136,18 @@ with col2:
                 key=param_key
             )
         elif param["type"] == "slider":
+            # Ensure all values are float for sliders
+            min_val = float(param.get("min", 0.0))
+            max_val = float(param.get("max", 100.0))
+            default_val = float(param.get("value", 50.0))
+            step_val = float(param.get("step", 1.0))
+            
             value = st.slider(
                 param["name"],
-                min_value=param.get("min", 0.0),
-                max_value=param.get("max", 100.0),
-                value=param.get("value", 50.0),
-                step=param.get("step", 1.0),
+                min_value=min_val,
+                max_value=max_val,
+                value=default_val,
+                step=step_val,
                 format="%.1f",
                 key=param_key
             )
