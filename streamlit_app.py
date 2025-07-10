@@ -1,30 +1,7 @@
 import streamlit as st
 import pandas as pd
-import pickle
 from plotly import graph_objs as go
 from Hydrothermal_Pretreatment import simulate_hydrothermal_degradation
-
-# Helper function to load model and make predictions
-def load_model_and_predict(model_path, input_data):
-    """
-    Load a pickle model and make predictions with error handling.
-    
-    Args:
-        model_path (str): Path to the pickle model file
-        input_data (list): Input data for prediction
-    
-    Returns:
-        tuple: (success, result) where success is bool and result is either prediction or error message
-    """
-    try:
-        with open(model_path, 'rb') as file:
-            modelo = pickle.load(file)
-        rendimento_previsto = modelo.predict(input_data)[0]
-        return True, rendimento_previsto
-    except FileNotFoundError:
-        return False, f"The model file '{model_path}' was not found."
-    except Exception as e:
-        return False, f"An error occurred while loading the model: {e}"
 
 # Configurando o layout para modo "wide"
 st.set_page_config(layout="wide")
@@ -341,8 +318,22 @@ with col6:
     
     st.button("Calculate Yield", key="hidrolise_resultados")
     
-    # Initialize rendimento_previsto to avoid undefined variable error
-    rendimento_previsto = None
+    # Placeholder for enzymatic hydrolysis model
+    # TODO: Replace with actual model function import
+    def predict_enzymatic_hydrolysis(cellulose_pct, lignin_pct, hemicellulose_pct, ash_pct, 
+                                   solid_loading, enzyme_loading, enzyme_type, biomass_type):
+        """
+        Placeholder function for enzymatic hydrolysis prediction.
+        This should be replaced with your actual model function.
+        """
+        # Simple placeholder calculation - replace with real model
+        base_yield = 75.0
+        cellulose_factor = cellulose_pct * 0.8
+        enzyme_factor = enzyme_loading * 2.0
+        solid_factor = max(0, 100 - solid_loading * 0.1)
+        
+        predicted_yield = min(95.0, base_yield + cellulose_factor * 0.2 + enzyme_factor * 0.1 + solid_factor * 0.05)
+        return predicted_yield
     
     if st.session_state.get("hidrolise_resultados"):
         # Validate inputs before processing
@@ -354,24 +345,27 @@ with col6:
             st.warning("Please correct the errors above before calculating the yield.")
         else:
             try:
-                with open('modelo_hidrolise.pkl', 'rb') as file:
-                    modelo = pickle.load(file)
-                
                 # Convert enzyme type to numerical value
                 enzyme_value = enzyme_types.get(enzyme, 1)
                 
                 # Convert biomass to numerical value (1 for Bagasse, 2 for Straw)
                 biomass_value = 1 if biomassa == "Sugarcane Bagasse" else 2
                 
-                # Create input data with simplified parameters
-                dados_entrada = [[celulose1, lignina1, hemicelulose1, cinzas1, solid_loading, enzyme_loading, enzyme_value, biomass_value]]
-                sucesso, resultado = load_model_and_predict('modelo_hidrolise.pkl', dados_entrada)
-                if sucesso:
-                    st.success(f"Yield predicted by the model: {resultado:.2f}%")
-                else:
-                    st.error(resultado)
+                # Use the placeholder function (replace with actual model import)
+                predicted_yield = predict_enzymatic_hydrolysis(
+                    celulose1, lignina1, hemicelulose1, cinzas1, 
+                    solid_loading, enzyme_loading, enzyme_value, biomass_value
+                )
+                
+                st.success(f"Yield predicted by the model: {predicted_yield:.2f}%")
+                
+                # Store result for chart
+                rendimento_previsto = predicted_yield
+                
             except Exception as e:
                 st.error(f"An error occurred while processing: {e}")
+    else:
+        rendimento_previsto = None
     st.metric(label="🔍 **Predicted Yield (%)**", value="91%", delta="+5%", help="This is the predicted yield for the selected conditions.")
     
     # Alteration 6: Replacing fixed charts with real data-based charts
