@@ -1,0 +1,24 @@
+{
+  "best_model": "Random Forest",
+  "test_r2_scores": {
+    "Glucose": 0.3914668172081537,
+    "Xylose": 0.2543887043756988,
+    "Cellobiose": 0.11883188524068267
+  },
+  "test_mse_scores": {
+    "Glucose": 0.4482656554001182,
+    "Xylose": 0.6285918925232938,
+    "Cellobiose": 0.46624284219816775
+  },
+  "synthetic_validation_r2": {
+    "Glucose": 0.9996208997561739,
+    "Xylose": 0.9995728747134065,
+    "Cellobiose": 0.9995812369958553
+  },
+  "synthetic_validation_mse": {
+    "Glucose": 0.09998037097602898,
+    "Xylose": 0.004447903228281635,
+    "Cellobiose": 7.542528842072344e-05
+  },
+  "timestamp": "20250713_134551"
+}

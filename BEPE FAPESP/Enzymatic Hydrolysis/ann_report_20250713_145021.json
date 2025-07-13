@@ -1,0 +1,31 @@
+{
+  "modelo": "Rede Neural Artificial (TensorFlow)",
+  "treinamento": "Dados sint\u00e9ticos do Rule-Based Model",
+  "arquitetura": {
+    "camadas": "4 camadas densas + dropout + batch normalization",
+    "neur\u00f4nios": [
+      128,
+      64,
+      32,
+      16
+    ],
+    "ativa\u00e7\u00e3o": "ReLU (camadas ocultas), Linear (sa\u00edda)",
+    "regulariza\u00e7\u00e3o": "Dropout (0.1-0.3) + Batch Normalization"
+  },
+  "m\u00e9tricas_dados_reais": {
+    "glicose": {
+      "R\u00b2": -8253.158403391753,
+      "MSE": 4547010.301333039,
+      "MAE": 1986.6004486223496,
+      "MAPE": 31179262419.232784
+    },
+    "xilose": {
+      "R\u00b2": -81.32660051504955,
+      "MSE": 1160.3905461752718,
+      "MAE": 31.032284686170307,
+      "MAPE": 494154222.3391101
+    }
+  },
+  "\u00e9pocas_treinadas": 49,
+  "timestamp": "20250713_145021"
+}
