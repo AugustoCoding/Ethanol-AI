@@ -1,5 +1,7 @@
 {
     "python.analysis.extraPaths": [
         "./BEPE FAPESP/Pretreatment"
-    ]
+    ],
+    "editor.cursorBlinking": "expand",
+    "editor.cursorSmoothCaretAnimation": "on"
 }
