@@ -1,0 +1,16 @@
+Metric,Value,Category
+Number of Input Variables,6.0,Dimensionality
+Number of Output Variables,3.0,Dimensionality
+Data Density,1.944,Dimensionality
+Glucose Concentration [g/L] - Multiple Linear R²,0.7363,Linear Relationships
+Xylose Concentration [g/L] - Multiple Linear R²,0.645,Linear Relationships
+Cellobiose Concentration [g/L] - Multiple Linear R²,0.4693,Linear Relationships
+Glucose Concentration [g/L] - CV,0.6813,Variability
+Xylose Concentration [g/L] - CV,0.6676,Variability
+Cellobiose Concentration [g/L] - CV,0.8121,Variability
+Glucose Concentration [g/L] - Entropy (10 bins),3.166,Entropy
+Xylose Concentration [g/L] - Entropy (10 bins),3.26,Entropy
+Cellobiose Concentration [g/L] - Entropy (10 bins),2.877,Entropy
+Glucose Concentration [g/L] - Non-linearity Improvement,0.1594,Temporal Dependencies
+Xylose Concentration [g/L] - Non-linearity Improvement,0.2102,Temporal Dependencies
+Cellobiose Concentration [g/L] - Non-linearity Improvement,0.3078,Temporal Dependencies

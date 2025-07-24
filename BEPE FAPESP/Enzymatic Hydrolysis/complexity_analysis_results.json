@@ -1,0 +1,298 @@
+{
+  "dimensionality": {
+    "n_samples": 70,
+    "n_input_variables": 6,
+    "n_output_variables": 3,
+    "data_density": 1.9444444444444444,
+    "samples_per_dimension": 11.666666666666666,
+    "input_variable_stats": {
+      "Cellulose": {
+        "min": 0.66,
+        "max": 0.66,
+        "range": 0.0,
+        "std": 3.354717538330842e-16,
+        "variance": 1.1254129761984543e-31,
+        "cv": 5.082905361107338e-16
+      },
+      "Hemicellulose": {
+        "min": 0.083,
+        "max": 0.083,
+        "range": 0.0,
+        "std": 1.3977989743045175e-17,
+        "variance": 1.953841972566761e-34,
+        "cv": 1.6840951497644787e-16
+      },
+      "Lignin": {
+        "min": 0.252,
+        "max": 0.252,
+        "range": 0.0,
+        "std": 1.118239179443614e-16,
+        "variance": 1.250458862442727e-32,
+        "cv": 4.4374570612841844e-16
+      },
+      "Solids Loading [g/L]": {
+        "min": 150.0,
+        "max": 200.0,
+        "range": 50.0,
+        "std": 18.328156619031816,
+        "variance": 335.9213250517598,
+        "cv": 0.11610596953232824
+      },
+      "Enzyme Loading [g/L]": {
+        "min": 0.088,
+        "max": 1.05,
+        "range": 0.9620000000000001,
+        "std": 0.2821833596213727,
+        "variance": 0.07962744844720496,
+        "cv": 0.7727421631130622
+      },
+      "Time [h]": {
+        "min": 0.0,
+        "max": 96.0,
+        "range": 96.0,
+        "std": 27.15488891007339,
+        "variance": 737.3879917184266,
+        "cv": 1.2375274893913653
+      }
+    }
+  },
+  "linear_relationships": {
+    "Glucose Concentration [g/L]": {
+      "Cellulose": {
+        "r_squared": 0.0,
+        "coefficient": 2.5498210332467064,
+        "intercept": 32.765703832342886
+      },
+      "Hemicellulose": {
+        "r_squared": 0.0,
+        "coefficient": -122.3914095958419,
+        "intercept": 44.607072710740596
+      },
+      "Lignin": {
+        "r_squared": 0.0,
+        "coefficient": 15.298926199480238,
+        "intercept": 30.593256312016695
+      },
+      "Solids Loading [g/L]": {
+        "r_squared": 0.006950050056151125,
+        "coefficient": -0.10752915254237284,
+        "intercept": 51.42283050847457
+      },
+      "Enzyme Loading [g/L]": {
+        "r_squared": 0.07255696550090951,
+        "coefficient": 22.566239859193555,
+        "intercept": 26.208039667418493
+      },
+      "Time [h]": {
+        "r_squared": 0.6472800616421059,
+        "coefficient": 0.7004048238087326,
+        "intercept": 19.079702723282665
+      },
+      "multiple_inputs": {
+        "r_squared": 0.7362940445938007,
+        "coefficients": "[ 1.77456438e-17 -4.44089210e-16 -3.11729809e-15 -4.80449823e-02\n  2.39191114e+01  7.10145437e-01]",
+        "intercept": 17.715633379747608
+      }
+    },
+    "Xylose Concentration [g/L]": {
+      "Cellulose": {
+        "r_squared": 0.0,
+        "coefficient": 0.6374552583116766,
+        "intercept": 5.202908100942865
+      },
+      "Hemicellulose": {
+        "r_squared": 0.0,
+        "coefficient": -22.94838929922036,
+        "intercept": 7.528344883263862
+      },
+      "Lignin": {
+        "r_squared": 0.0,
+        "coefficient": 2.868548662402545,
+        "intercept": 4.90075430850313
+      },
+      "Solids Loading [g/L]": {
+        "r_squared": 0.0013133180120672439,
+        "coefficient": 0.0074769183359014,
+        "intercept": 4.443343605546993
+      },
+      "Enzyme Loading [g/L]": {
+        "r_squared": 0.047880483639317295,
+        "coefficient": 2.932272576731658,
+        "intercept": 4.552846405622648
+      },
+      "Time [h]": {
+        "r_squared": 0.5796430968454466,
+        "coefficient": 0.10602023874770326,
+        "intercept": 3.297241618336111
+      },
+      "multiple_inputs": {
+        "r_squared": 0.6450290847770515,
+        "coefficients": "[ 2.24392456e-18  3.53883589e-16 -9.52580029e-16  1.63701018e-02\n  3.58475371e+00  1.06747449e-01]",
+        "intercept": -0.6119025917751459
+      }
+    },
+    "Cellobiose Concentration [g/L]": {
+      "Cellulose": {
+        "r_squared": 1.1102230246251565e-16,
+        "coefficient": 0.23904572186687872,
+        "intercept": 0.6106155378535744
+      },
+      "Hemicellulose": {
+        "r_squared": 1.1102230246251565e-16,
+        "coefficient": -2.868548662402545,
+        "intercept": 1.0064752532651255
+      },
+      "Lignin": {
+        "r_squared": 1.1102230246251565e-16,
+        "coefficient": 0.3585685828003181,
+        "intercept": 0.6780264314200342
+      },
+      "Solids Loading [g/L]": {
+        "r_squared": 0.03400166643886893,
+        "coefficient": -0.006323174114021573,
+        "intercept": 1.7665439137134054
+      },
+      "Enzyme Loading [g/L]": {
+        "r_squared": 0.1537328163445657,
+        "coefficient": 0.8732844331465587,
+        "intercept": 0.4494871902843953
+      },
+      "Time [h]": {
+        "r_squared": 0.2921642321768608,
+        "coefficient": 0.012510345958427486,
+        "intercept": 0.4938729801122197
+      },
+      "multiple_inputs": {
+        "r_squared": 0.46926451087335797,
+        "coefficients": "[ 3.99070112e-19  1.00613962e-16 -3.13009167e-16 -3.36633813e-03\n  8.50415777e-01  1.29082002e-02]",
+        "intercept": 0.7059958951257292
+      }
+    }
+  },
+  "variability": {
+    "Glucose Concentration [g/L]": {
+      "mean": 34.44858571428571,
+      "median": 37.254000000000005,
+      "std": 23.47072848920718,
+      "variance": 550.8750958140815,
+      "min": 0.0,
+      "max": 84.52,
+      "range": 84.52,
+      "q25": 12.3025,
+      "q75": 54.7595,
+      "iqr": 42.457,
+      "cv": 0.6813263303135823,
+      "skewness": 0.036948128105979874,
+      "kurtosis": -1.2020591927681512
+    },
+    "Xylose Concentration [g/L]": {
+      "mean": 5.623628571428571,
+      "median": 5.519500000000001,
+      "std": 3.754326160469236,
+      "variance": 14.094964919183674,
+      "min": 0.0,
+      "max": 11.988,
+      "range": 11.988,
+      "q25": 2.564,
+      "q75": 8.864,
+      "iqr": 6.300000000000001,
+      "cv": 0.6675985287405857,
+      "skewness": 0.04500334771782433,
+      "kurtosis": -1.2589165059172074
+    },
+    "Cellobiose Concentration [g/L]": {
+      "mean": 0.7683857142857142,
+      "median": 0.8855,
+      "std": 0.623992474607945,
+      "variance": 0.38936660836734693,
+      "min": 0.0,
+      "max": 2.192,
+      "range": 2.192,
+      "q25": 0.09875,
+      "q75": 1.258,
+      "iqr": 1.1592500000000001,
+      "cv": 0.8120823474548898,
+      "skewness": 0.19382459614123196,
+      "kurtosis": -1.1503184713698387
+    }
+  },
+  "entropy": {
+    "Glucose Concentration [g/L]": {
+      "bins_5": 2.2110776261808875,
+      "bins_10": 3.16638019809749,
+      "bins_15": 3.673308278830994,
+      "bins_20": 3.98982766794212,
+      "sturges_rule": 2.837254284828785
+    },
+    "Xylose Concentration [g/L]": {
+      "bins_5": 2.3071021557301883,
+      "bins_10": 3.260111233909513,
+      "bins_15": 3.8099692327166492,
+      "bins_20": 4.083103739556131,
+      "sturges_rule": 2.9643557773821145
+    },
+    "Cellobiose Concentration [g/L]": {
+      "bins_5": 2.0962346905326417,
+      "bins_10": 2.876781202297575,
+      "bins_15": 3.3812677705041305,
+      "bins_20": 3.7261806523444925,
+      "sturges_rule": 2.607943654724918
+    }
+  },
+  "temporal_dependencies": {
+    "Glucose Concentration [g/L]": {
+      "linear_r_squared": 0.6472800616421059,
+      "correlation": 0.8045371723184118,
+      "polynomial_fits": {
+        "degree_2": {
+          "r_squared": 0.7476357667201201,
+          "improvement_over_linear": 0.10035570507801417
+        },
+        "degree_3": {
+          "r_squared": 0.7934963055919863,
+          "improvement_over_linear": 0.1462162439498803
+        },
+        "degree_4": {
+          "r_squared": 0.8066770215207516,
+          "improvement_over_linear": 0.15939695987864566
+        }
+      }
+    },
+    "Xylose Concentration [g/L]": {
+      "linear_r_squared": 0.5796430968454466,
+      "correlation": 0.7613429561278188,
+      "polynomial_fits": {
+        "degree_2": {
+          "r_squared": 0.7138390556838976,
+          "improvement_over_linear": 0.13419595883845103
+        },
+        "degree_3": {
+          "r_squared": 0.7620863432947524,
+          "improvement_over_linear": 0.18244324644930587
+        },
+        "degree_4": {
+          "r_squared": 0.7898664439553238,
+          "improvement_over_linear": 0.21022334710987722
+        }
+      }
+    },
+    "Cellobiose Concentration [g/L]": {
+      "linear_r_squared": 0.2921642321768608,
+      "correlation": 0.5405221847222004,
+      "polynomial_fits": {
+        "degree_2": {
+          "r_squared": 0.5784783814537469,
+          "improvement_over_linear": 0.28631414927688603
+        },
+        "degree_3": {
+          "r_squared": 0.5856291961650836,
+          "improvement_over_linear": 0.29346496398822275
+        },
+        "degree_4": {
+          "r_squared": 0.6000072302209961,
+          "improvement_over_linear": 0.3078429980441353
+        }
+      }
+    }
+  }
+}
