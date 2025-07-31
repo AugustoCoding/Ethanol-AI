@@ -1,7 +1,10 @@
 {
     "python.analysis.extraPaths": [
-        "./BEPE FAPESP/Pretreatment"
+        "./BEPE FAPESP/Pretreatment",
+        "./BEPE FAPESP/Enzymatic Hydrolysis",
+        "./BEPE FAPESP/Fermentation"
     ],
     "editor.cursorBlinking": "expand",
-    "editor.cursorSmoothCaretAnimation": "on"
+    "editor.cursorSmoothCaretAnimation": "on",
+    "workbench.iconTheme": "vscode-great-icons"
 }
