@@ -2,7 +2,7 @@
     "python.analysis.extraPaths": [
         "./BEPE FAPESP/Pretreatment",
         "./BEPE FAPESP/Enzymatic Hydrolysis",
-        "./BEPE FAPESP/Fermentation"
+        "./BEPE FAPESP/Fermentation",
     ],
     "editor.cursorBlinking": "expand",
     "editor.cursorSmoothCaretAnimation": "on",
