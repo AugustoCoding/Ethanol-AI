@@ -282,9 +282,9 @@ with col5:
     enzyme = st.selectbox("Enzyme", ['Type 1', 'Type 2', 'Type 3'])
     
     # Simplified parameters for all conditions
-    solid_loading = st.number_input("Initial Solids Loading (g/L)", min_value=0.0, format="%.2f")
-    enzyme_loading = st.number_input("Initial Enzyme Loading (g/L)", min_value=0.0, format="%.2f")
-    reaction_time = st.slider("Reaction Time (h)", min_value=0.0, max_value=96.0, value=96.0, step=0.1, format="%.2f")
+    solid_loading = st.number_input("Initial Solids Loading (g/L)", min_value=0.0, max_value=300, format="%.2f")
+    enzyme_loading = st.number_input("Initial Enzyme Loading (g/L)", min_value=0.0, max_value=2.0, format="%.2f")
+    reaction_time = st.number_input("Reaction Time (h)", min_value=0.0, max_value=96.0, format="%.2f")
 
 # Alteration 3: Mapping selection options to numerical values before using them (no longer needed for simplified version)
 enzyme_types = {"Type 1": 1, "Type 2": 2, "Type 3": 3}
