@@ -1,10 +1,174 @@
+import numpy as np
 import streamlit as st
 import pandas as pd
 from plotly import graph_objs as go
+from plotly.subplots import make_subplots
+from scipy.integrate import solve_ivp
+from scipy.optimize import fsolve
 from Hydrothermal_Pretreatment import simulate_hydrothermal_degradation
+
+
+page_bg_img = """
+<style>
+[data-testid="stAppViewContainer"] {
+    background: linear-gradient(rgba(255, 255, 255, 0.25), rgba(255, 255, 255, 0.25)),
+                url("https://images.unsplash.com/photo-1675251171768-5d49233cc410?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=764");
+    background-size: cover;
+    background-attachment: fixed;
+}
+
+[data-testid="stHeader"] {
+    background-color: rgba(0, 0, 0, 0);
+}
+
+/* Garantir que o conteudo aparece sobre o fundo */
+[data-testid="stToolbar"] {
+    z-index: 1;
+}
+</style>
+"""
+
+
+def calculate_enzyme_equilibrium(E_total: float, solids: float, E_max: float, k_ad: float) -> tuple[float, float]:
+    """Compute free and adsorbed enzyme concentrations at equilibrium."""
+
+    solids = max(solids, 1e-6)
+
+    def equation(E_free: float) -> float:
+        E_bound = max(E_total - E_free, 0.0)
+        return (E_max * k_ad * E_free) / (1 + k_ad * E_free) - (E_bound / solids)
+
+    try:
+        initial_guess = min(E_total, 0.1)
+        solution = fsolve(equation, x0=initial_guess, xtol=1e-10)
+        E_free = float(np.clip(solution[0], 0.0, E_total))
+    except Exception:
+        # Fall back to assuming small free enzyme if convergence fails
+        E_free = min(E_total, 0.01)
+
+    E_bound = max(E_total - E_free, 0.0)
+    return E_free, E_bound
+
+
+def simulate_enzymatic_hydrolysis(
+    solid_loading: float,
+    enzyme_loading: float,
+    cellulose_percent: float,
+    hemicellulose_percent: float,
+    reaction_time: float
+) -> pd.DataFrame:
+    """Run the Angarita et al. 2015 enzymatic hydrolysis model for UI inputs."""
+
+    if reaction_time <= 0:
+        raise ValueError("Reaction time must be greater than zero.")
+
+    if solid_loading <= 0:
+        raise ValueError("Solids loading must be greater than zero.")
+
+    S0 = solid_loading
+    Cellulose = max(cellulose_percent / 100.0, 0.0)
+    Hemicellulose = max(hemicellulose_percent / 100.0, 0.0)
+    E_T = max(enzyme_loading, 1e-6)
+
+    if Cellulose + Hemicellulose <= 0:
+        raise ValueError("Cellulose and hemicellulose fractions must be greater than zero.")
+
+    alfa = 1.0
+
+    # Kinetic parameters (Angarita et al. 2015)
+    k_1r = 0.177
+    k_2r = 8.81
+    k_3r = 201.0
+    k_4r = 16.34
+
+    k_11G2 = 0.402
+    k_11G = 2.71
+    k_11X = 2.15
+
+    k_21G2 = 119.6
+    k_21G = 4.69
+    k_21X = 0.095
+
+    k_3M = 26.6
+    k_31G = 11.06
+    k_31X = 1.023
+
+    k_41G2 = 16.25
+    k_41G = 4.0
+    k_41X = 154.0
+
+    k_ad = 7.16
+    E_max = 8.32 / 1000
+
+    E_F_init, E_B_init = calculate_enzyme_equilibrium(E_T, S0, E_max, k_ad)
+
+    y0 = [
+        S0 * Cellulose,
+        0.0,
+        0.0,
+        S0 * Hemicellulose,
+        0.0,
+        S0,
+        E_B_init,
+        E_F_init,
+    ]
+
+    def modelo_hidrolise(t: float, y: np.ndarray) -> list[float]:
+        C, G2, G, H, X, S, E_B, E_F = y
+
+        S = max(S, 1e-6)
+        R_S = alfa * S / S0
+
+        if S <= 0:
+            Ebc = 0.0
+            Ebh = 0.0
+        else:
+            Ebc = E_B * (C / S)
+            Ebh = E_B * (H / S)
+
+        r1 = k_1r * Ebc * R_S * C / (1 + G2 / k_11G2 + G / k_11G + X / k_11X)
+        r2 = k_2r * Ebc * R_S * C / (1 + G2 / k_21G2 + G / k_21G + X / k_21X)
+        r3 = k_3r * E_F * G2 / (k_3M * (1 + G / k_31G + X / k_31X) + G2)
+        r4 = k_4r * Ebh * R_S * H / (1 + G2 / k_41G2 + G / k_41G + X / k_41X)
+
+        dCdt = -r1 - r2
+        dG2dt = 1.056 * r1 - r3
+        dGdt = 1.111 * r2 + 1.053 * r3
+        dHdt = -r4
+        dXdt = 1.136 * r4
+        dSdt = -r1 - r2 - r4
+
+        return [dCdt, dG2dt, dGdt, dHdt, dXdt, dSdt, 0.0, 0.0]
+
+    num_points = max(100, int(reaction_time * 2) + 1)
+    t_eval = np.linspace(0.0, reaction_time, num_points)
+
+    solution = solve_ivp(
+        modelo_hidrolise,
+        t_span=(0.0, reaction_time),
+        y0=y0,
+        t_eval=t_eval,
+        method="LSODA",
+        rtol=1e-6,
+        atol=1e-8,
+    )
+
+    if not solution.success:
+        raise RuntimeError(f"Hydrolysis simulation failed: {solution.message}")
+
+    return pd.DataFrame(
+        {
+            "Time (h)": solution.t,
+            "Glucose": solution.y[2],
+            "Xylose": solution.y[4],
+            "Cellobiose": solution.y[1],
+        }
+    )
 
 # Configurando o layout para modo "wide"
 st.set_page_config(layout="wide")
+
+st.markdown(page_bg_img, unsafe_allow_html=True)
 
 # Título do app
 st.title('⚗️Ethanol AI (Beta)')
@@ -270,27 +434,119 @@ col4, spacer3, col5, spacer4, col6 = st.columns([10, 2, 10, 2, 10])
 with col4:
     st.header("Pre-Treatment Data")
     st.write("Enter the data obtained from pre-treatment.")
-    celulose1 = st.number_input("Cellulose Percentage", min_value=0.0, max_value=100.0, format="%.2f")
+    celulose1 = st.number_input(
+        "Cellulose Percentage",
+        min_value=45.0,
+        max_value=65.0,
+        format="%.2f",
+        placeholder="45.00 – 65.00"
+    )
     lignina1 = st.number_input("Lignin Percentage", min_value=0.0, max_value=100.0, format="%.2f")
-    hemicelulose1 = st.number_input("Hemicellulose Percentage", min_value=0.0, max_value=100.0, format="%.2f")
-    cinzas1 = st.number_input("Ash Percentage", min_value=0.0, max_value=100.0, format="%.2f")
+    hemicelulose1 = st.number_input(
+        "Hemicellulose Percentage",
+        min_value=5.0,
+        max_value=15.0,
+        format="%.2f",
+        placeholder="05.00 – 15.00"
+    )
 
 # Customizing the Enzymatic Hydrolysis Parameters column (col5)
 with col5:
     st.header("Enzymatic Hydrolysis Parameters")
     st.write(f"Enter the enzymatic hydrolysis parameters to define your operating condition for {biomassa} with the enzyme.")
-    enzyme = st.selectbox("Enzyme", ['Type 1', 'Type 2', 'Type 3'])
+    enzyme = st.selectbox("Enzyme", ['Saccharomyces cerevisiae'])
     
     # Simplified parameters for all conditions
-    solid_loading = st.number_input("Initial Solids Loading (g/L)", min_value=0.0, max_value=300, format="%.2f")
-    enzyme_loading = st.number_input("Initial Enzyme Loading (g/L)", min_value=0.0, max_value=2.0, format="%.2f")
-    reaction_time = st.number_input("Reaction Time (h)", min_value=0.0, max_value=96.0, format="%.2f")
+    solid_loading = st.number_input(
+        "Initial Solids Loading (g/L)",
+        min_value=50.0,
+        max_value=250.0,
+        format="%.2f",
+        placeholder="50.00 – 250.00"
+    )
+    enzyme_loading = st.number_input(
+        "Initial Enzyme Loading (g/L)",
+        min_value=0.05,
+        max_value=1.2,
+        format="%.2f",
+        placeholder="0.05 – 1.20"
+    )
+    reaction_time = st.number_input(
+        "Reaction Time (h)",
+        min_value=0.0,
+        max_value=96.0,
+        format="%.2f",
+        placeholder="0.00 – 96.00"
+    )
 
 # Alteration 3: Mapping selection options to numerical values before using them (no longer needed for simplified version)
-enzyme_types = {"Type 1": 1, "Type 2": 2, "Type 3": 3}
+enzyme_types = {"Saccharomyces cerevisiae": 1}
 
 # Customizing the Enzymatic Hydrolysis Results column (col6)
 with col6:
     st.header("Enzymatic Hydrolysis Results")
     st.write(f"Here you can see the results obtained for the Enzymatic Hydrolysis stage of {biomassa}. Change the chart layout to visualize more relationships between the variables.")
+    if st.button("Simulate Hydrolysis Profile", key="run_hydrolysis_profile"):
+        if reaction_time <= 0:
+            st.warning("Please set a reaction time greater than zero to generate the profile.")
+        else:
+            try:
+                profile_df = simulate_enzymatic_hydrolysis(
+                    solid_loading=solid_loading,
+                    enzyme_loading=enzyme_loading,
+                    cellulose_percent=celulose1,
+                    hemicellulose_percent=hemicelulose1,
+                    reaction_time=reaction_time
+                )
+
+                glucose_final = profile_df["Glucose"].iloc[-1]
+                st.metric("Glucose Produced", f"{glucose_final:.2f} g/L")
+
+                fig = make_subplots(specs=[[{"secondary_y": True}]])
+
+                fig.add_trace(
+                    go.Scatter(
+                        x=profile_df["Time (h)"],
+                        y=profile_df["Glucose"],
+                        mode="lines",
+                        line=dict(color="#1f77b4", width=3),
+                        name="Glucose"
+                    ),
+                    secondary_y=False
+                )
+
+                fig.add_trace(
+                    go.Scatter(
+                        x=profile_df["Time (h)"],
+                        y=profile_df["Xylose"],
+                        mode="lines",
+                        line=dict(color="#2ca02c", width=3),
+                        name="Xylose"
+                    ),
+                    secondary_y=True
+                )
+
+                fig.add_trace(
+                    go.Scatter(
+                        x=profile_df["Time (h)"],
+                        y=profile_df["Cellobiose"],
+                        mode="lines",
+                        line=dict(color="#ff7f0e", width=3),
+                        name="Cellobiose"
+                    ),
+                    secondary_y=True
+                )
+
+                fig.update_layout(
+                    title="Enzymatic Hydrolysis Concentration Profiles",
+                    hovermode="x unified"
+                )
+                fig.update_xaxes(title_text="Time (h)")
+                fig.update_yaxes(title_text="Glucose (g/L)", secondary_y=False)
+                fig.update_yaxes(title_text="Xylose / Cellobiose (g/L)", secondary_y=True)
+
+                st.plotly_chart(fig, use_container_width=True)
+                st.dataframe(profile_df.round(3))
+            except Exception as exc:
+                st.error(f"Error while running hydrolysis simulation: {exc}")
     
