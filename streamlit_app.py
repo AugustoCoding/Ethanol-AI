@@ -539,4 +539,3 @@ with col6:
                 st.dataframe(profile_df.round(3))
             except Exception as exc:
                 st.error(f"Error while running hydrolysis simulation: {exc}")
-    
