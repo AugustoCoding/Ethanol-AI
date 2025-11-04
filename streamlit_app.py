@@ -201,7 +201,24 @@ st.set_page_config(layout="wide")
 st.markdown(page_bg_img, unsafe_allow_html=True)
 
 # Título do app
-st.title('⚗️Ethanol AI (Beta)')
+st.markdown("""
+<style>
+/* Main title */
+.main-title {
+    background: linear-gradient(135deg, #1e3c72, #2c3e50, #27ae60, #3498db);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-align: center;
+    font-size: 4em !important;
+    font-weight: 800 !important;
+    margin-bottom: 30px !important;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+}
+</style>
+
+<h1 class='main-title'>Ethanol AI</h1>
+""", unsafe_allow_html=True)
 
 # Informação principal
 st.write("Ethanol AI is a tool created within a research program called scientific initiation by researchers from UFSCar and DTU with funding from FAPESP. It is particularly useful for studying the behavior of different second-generation ethanol production processes when subjected to various operating conditions. This software implements hybrid machine learning models, previously trained using knowledge generated from previous research works at UFSCar and abroad, to predict the outcomes. Here, you can test different combinations of initial conditions, essentially finding the maximum possible yield for each situation.")
