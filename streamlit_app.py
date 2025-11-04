@@ -222,137 +222,38 @@ with col1:
     st.header("Parameters")
     
     # Initial Data section
-    biomassa = st.selectbox("Select a biomass type", ['Sugarcane Bagasse', 'Sugarcane Straw'])
-    pretratamento = st.selectbox("Select a Pre-Treatment type", ['Acid', 'Basic', 'Organosolv', 'Hydrothermal'])
+    biomassa = st.selectbox("Select a biomass type", ['Sugarcane Straw', 'Sugarcane Bagasse'], index=0, help="Note: Only Sugarcane Straw with Hydrothermal pretreatment is currently available")
+    if biomassa == 'Sugarcane Bagasse':
+        st.warning("⚠️ Sugarcane Bagasse models are not yet available for Pre-Treatment")
+    pretratamento = st.selectbox("Select a Pre-Treatment type", ['Hydrothermal', 'Organosolv'], index=0, help="Note: Organosolv model is under development")
+    if pretratamento == 'Organosolv':
+        st.warning("⚠️ Organosolv pretreatment model is not yet available")
     celulose = st.number_input("Cellulose Percentage (0.00 - 100.00) (%)", min_value=0.0, max_value=100.0, format="%.2f")
     lignina = st.number_input("Lignin Percentage (0.00 - 100.00) (%)", min_value=0.0, max_value=100.0, format="%.2f")
     hemicelulose = st.number_input("Hemicellulose Percentage (0.00 - 100.00) (%)", min_value=0.0, max_value=100.0, format="%.2f")
     extrativos = st.number_input("Extractives Percentage (0.00 - 100.00) (%)", min_value=0.0, max_value=100.0, format="%.2f")
     cinzas = st.number_input("Ash Percentage (0.00 - 100.00) (%)", min_value=0.0, max_value=100.0, format="%.2f")
-    
-    st.markdown("<br>", unsafe_allow_html=True)
-    
-    # Configuration dictionary for different combinations
-    parameter_configs = {
-        ("Sugarcane Bagasse", "Acid"): {
-            "params": [
-                {"name": "Temperature (°C)", "type": "number", "min": 120.0, "max": 200.0, "value": 160.0},
-                {"name": "Acid Concentration (%)", "type": "number", "min": 0.5, "max": 5.0, "value": 2.0},
-                {"name": "Time (min)", "type": "number", "min": 10.0, "max": 120.0, "value": 60.0},
-                {"name": "Acid Type", "type": "selectbox", "options": ["H2SO4", "HCl", "HNO3"]},
-                {"name": "Pressure (bar)", "type": "selectbox", "options": ["Atmospheric", "2 bar", "5 bar"]},
-                {"name": "Catalyst Present", "type": "checkbox"}
-            ]
-        },
-        ("Sugarcane Bagasse", "Basic"): {
-            "params": [
-                {"name": "Temperature (°C)", "type": "number", "min": 80.0, "max": 180.0, "value": 120.0},
-                {"name": "Base Concentration (%)", "type": "number", "min": 1.0, "max": 10.0, "value": 4.0},
-                {"name": "Time (min)", "type": "number", "min": 30.0, "max": 180.0, "value": 90.0},
-                {"name": "Base Type", "type": "selectbox", "options": ["NaOH", "KOH", "Ca(OH)2"]},
-                {"name": "Mixing Speed", "type": "selectbox", "options": ["Low", "Medium", "High"]},
-                {"name": "Oxygen Present", "type": "checkbox"}
-            ]
-        },
-        ("Sugarcane Bagasse", "Organosolv"): {
-            "params": [
-                {"name": "Temperature (°C)", "type": "number", "min": 150.0, "max": 220.0, "value": 180.0},
-                {"name": "Ethanol Concentration (%)", "type": "number", "min": 40.0, "max": 80.0, "value": 60.0},
-                {"name": "Time (min)", "type": "number", "min": 30.0, "max": 150.0, "value": 75.0},
-                {"name": "Catalyst", "type": "selectbox", "options": ["H2SO4", "HCl", "Formic Acid"]},
-                {"name": "Liquid/Solid Ratio", "type": "selectbox", "options": ["5:1", "10:1", "15:1"]},
-                {"name": "Acid Added", "type": "checkbox"}
-            ]
-        },
-        ("Sugarcane Bagasse", "Hydrothermal"): {
-            "params": [
-                {"name": "Temperature (°C)", "type": "selectbox", "options": [180, 195, 210]},
-                {"name": "Solid Loading (g/L)", "type": "number", "min": 50.0, "max": 200.0, "value": 100.0},
-                {"name": "Time (min)", "type": "slider", "min": 10.0, "max": 120.0, "value": 40.0},
-                {"name": "pH", "type": "selectbox", "options": ["Natural", "Acidic", "Basic"]},
-                {"name": "Pressure", "type": "selectbox", "options": ["Autogenous", "Controlled"]},
-                {"name": "Stirring", "type": "checkbox"}
-            ]
-        },
-        ("Sugarcane Straw", "Hydrothermal"): {
-            "params": [
-                {"name": "Solid Loading (g/L)", "type": "number", "min": 1.0, "max": 500.0, "value": 100.0},
-                {"name": "Temperature (°C)", "type": "selectbox", "options": [180, 195, 210]},
-                {"name": "Time (min)", "type": "slider", "min": 1.0, "max": 120.0, "value": 15.0, "step": 0.1}
-            ]
-        }
-    }
-    
-    # Default configuration for combinations not specifically defined
-    default_config = {
-        "params": [
-            {"name": "Temperature (°C)", "type": "number", "min": 100.0, "max": 250.0, "value": 150.0},
-            {"name": "Concentration (%)", "type": "number", "min": 1.0, "max": 10.0, "value": 5.0},
-            {"name": "Time (min)", "type": "number", "min": 30.0, "max": 180.0, "value": 60.0},
-            {"name": "Reagent Type", "type": "selectbox", "options": ["Type A", "Type B", "Type C"]},
-            {"name": "Process Mode", "type": "selectbox", "options": ["Batch", "Continuous", "Semi-batch"]},
-            {"name": "Catalyst Present", "type": "checkbox"}
-        ]
-    }
-    
-    # Get configuration for current combination
-    current_config = parameter_configs.get((biomassa, pretratamento), default_config)
-    
-    # Store parameters in session state to access later
-    if 'pretreatment_params' not in st.session_state:
-        st.session_state.pretreatment_params = {}
-    
-    # Generate UI elements based on configuration
-    for i, param in enumerate(current_config["params"]):
-        param_key = f"{biomassa}_{pretratamento}_{param['name']}"
-        
-        if param["type"] == "number":
-            # Ensure all values are float for consistent display
-            min_val = float(param.get("min", 0.0))
-            max_val = float(param.get("max", 1000.0))
-            default_val = float(param.get("value", 0.0))
-            
-            value = st.number_input(
-                param["name"],
-                min_value=min_val,
-                max_value=max_val,
-                value=default_val,
-                format="%.2f",
-                key=param_key
-            )
-        elif param["type"] == "selectbox":
-            value = st.selectbox(
-                param["name"],
-                options=param["options"],
-                key=param_key
-            )
-        elif param["type"] == "slider":
-            # Ensure all values are float for sliders
-            min_val = float(param.get("min", 0.0))
-            max_val = float(param.get("max", 100.0))
-            default_val = float(param.get("value", 50.0))
-            step_val = float(param.get("step", 1.0))
-            
-            value = st.slider(
-                param["name"],
-                min_value=min_val,
-                max_value=max_val,
-                value=default_val,
-                step=step_val,
-                format="%.1f",
-                key=param_key
-            )
-        elif param["type"] == "checkbox":
-            value = st.checkbox(param["name"], key=param_key)
-        
-        # Store in session state
-        st.session_state.pretreatment_params[param["name"]] = value
-    
-    # Special handling for Hydrothermal (backward compatibility)
-    if pretratamento == "Hydrothermal" and biomassa == "Sugarcane Straw":
-        solid_loading_hydro = st.session_state.pretreatment_params.get("Solid Loading (g/L)", 100.0)
-        temperature_hydro = st.session_state.pretreatment_params.get("Temperature (°C)", 195)
-        time_hydro = st.session_state.pretreatment_params.get("Time (min)", 15.0)
+
+    # Universal pretreatment parameters
+    solid_loading_hydro = st.number_input(
+        "Solid Loading (g/L)",
+        min_value=1.0,
+        max_value=500.0,
+        value=100.0,
+        format="%.2f"
+    )
+    temperature_hydro = st.selectbox(
+        "Temperature (°C)",
+        options=[180, 195, 210],
+        index=1
+    )
+    time_hydro = st.number_input(
+        "Time (min)",
+        min_value=1.0,
+        max_value=120.0,
+        value=15.0,
+        format="%.1f"
+    )
 
 # Customizing the Pre-Treatment Results column (col3)
 
@@ -360,9 +261,12 @@ with col3:
     st.header("Results")
     st.write(f"Here you can see the results obtained for the {pretratamento} Pretreatment stage of {biomassa}. Change the chart layout to visualize more relationships between the variables.")
     
+    # Check if model is available for selected combination
+    model_available = (pretratamento == "Hydrothermal" and biomassa == "Sugarcane Straw")
+    
     # Special handling for Hydrothermal pretreatment
     if pretratamento == "Hydrothermal" and biomassa == "Sugarcane Straw":
-        if st.button("Calculate Hydrothermal Degradation", key="hydrothermal_calc"):
+        if st.button("Calculate Hydrothermal Degradation", key="hydrothermal_calc", disabled=not model_available):
             try:
                 # Convert percentages to fractions
                 cellulose_frac = celulose / 100.0
@@ -441,9 +345,11 @@ with col3:
                 st.info("Please check your input parameters and try again.")
     
     else:
-        # For other pretreatment types, keep the original placeholder
-        def select_model():
-            return 0
+        # For other pretreatment types, show info message
+        if biomassa == 'Sugarcane Bagasse':
+            st.info("ℹ️ Models for Sugarcane Bagasse are under development.")
+        elif pretratamento == "Organosolv":
+            st.info(f"ℹ️ Organosolv pretreatment model for {biomassa} is under development.")
     
 st.markdown("<hr style='border: 1px solid #ccc;' />", unsafe_allow_html=True)
 
@@ -461,6 +367,10 @@ col4, spacer4, col6 = st.columns([6, 1, 10])
 with col4:
     st.header("Parameters")
     
+    biomassa_hydrolysis = st.selectbox("Select a biomass type", ['Sugarcane Straw', 'Sugarcane Bagasse'], index=0, key="biomassa_hydrolysis", disabled=False, help="Note: Only Sugarcane Straw model is currently available")
+    if biomassa_hydrolysis == 'Sugarcane Bagasse':
+        st.warning("⚠️ Sugarcane Bagasse model is not yet available for Enzymatic Hydrolysis")
+    enzyme = st.selectbox("Enzyme", ['Saccharomyces cerevisiae'])
     celulose1 = st.number_input(
         "Cellulose Percentage",
         min_value=45.0,
@@ -478,8 +388,6 @@ with col4:
         format="%.2f",
         placeholder="05.00 – 15.00"
     )
-    
-    enzyme = st.selectbox("Enzyme", ['Saccharomyces cerevisiae'])
     
     # Simplified parameters for all conditions
     solid_loading = st.number_input(
@@ -513,8 +421,12 @@ enzyme_types = {"Saccharomyces cerevisiae": 1}
 # Customizing the Enzymatic Hydrolysis Results column (col6)
 with col6:
     st.header("Results")
-    st.write(f"Here you can see the results obtained for the Enzymatic Hydrolysis stage of {biomassa}. Change the chart layout to visualize more relationships between the variables.")
-    if st.button("Simulate Hydrolysis Profile", key="run_hydrolysis_profile"):
+    st.write(f"Here you can see the results obtained for the Enzymatic Hydrolysis stage of {biomassa_hydrolysis}. Change the chart layout to visualize more relationships between the variables.")
+    
+    # Check if model is available for selected biomass
+    model_available = biomassa_hydrolysis == 'Sugarcane Straw'
+    
+    if st.button("Simulate Hydrolysis Profile", key="run_hydrolysis_profile", use_container_width=True, disabled=not model_available):
         if reaction_time <= 0:
             st.warning("Please set a reaction time greater than zero to generate the profile.")
         else:
@@ -531,14 +443,23 @@ with col6:
                 xylose_final = profile_df["Xylose"].iloc[-1]
                 cellobiose_final = profile_df["Cellobiose"].iloc[-1]
                 
+                # Calcular rendimento de glicose
+                # Rendimento teórico: 1.111 g glicose por g de celulose (conversão estequiométrica)
+                cellulose_initial = solid_loading * (celulose1 / 100.0)
+                glucose_theoretical = cellulose_initial * 1.111
+                glucose_yield_percent = (glucose_final / glucose_theoretical) * 100 if glucose_theoretical > 0 else 0
+                
                 # Exibir métricas em três colunas
                 col_g, col_x, col_c = st.columns(3)
                 with col_g:
                     st.metric("Glucose Produced", f"{glucose_final:.2f} g/L")
-                with col_x:
                     st.metric("Xylose Produced", f"{xylose_final:.2f} g/L")
-                with col_c:
+                    
+                with col_x:
+                    st.metric("Theoretical Glucose", f"{glucose_theoretical:.2f} g/L", help="Maximum theoretical glucose from complete cellulose hydrolysis")
                     st.metric("Cellobiose Produced", f"{cellobiose_final:.2f} g/L")
+                with col_c:
+                    st.metric("Glucose Yield", f"{glucose_yield_percent:.1f}%", help="Percentage of theoretical maximum glucose production")
 
                 fig = make_subplots(specs=[[{"secondary_y": True}]])
 
