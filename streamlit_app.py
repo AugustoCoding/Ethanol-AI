@@ -226,17 +226,17 @@ st.markdown("<hr style='border: 1px solid #ccc;' />", unsafe_allow_html=True)
 
 # Etapa de Pré-Tratamento
 st.markdown(
-    "<h1 style='font-size:50px;'>Pre-Treatment</h1>",
+    "<h1 style='font-size:50px;'>♨️Pretreatment</h1>",
     unsafe_allow_html=True
 )
 st.write("In this section, introduce the relevant data for calculating the yield of the Pre-Treatment.")
 
 # Criando colunas "Parâmetros" e "Resultados"
-col1, spacer, col3 = st.columns([6, 2, 10])
+col1, spacer, col3 = st.columns([6, 1, 10])
 
 # Customizing the unified Parameters column (col1)
 with col1:
-    st.header("Parameters")
+    st.header("📊Parameters")
     
     # Initial Data section
     biomassa = st.selectbox("Select a biomass type", ['Sugarcane Straw', 'Sugarcane Bagasse'], index=0, help="Note: Only Sugarcane Straw with Hydrothermal pretreatment is currently available")
@@ -275,7 +275,7 @@ with col1:
 # Customizing the Pre-Treatment Results column (col3)
 
 with col3:
-    st.header("Results")
+    st.header("🎯Results")
     st.write(f"Here you can see the results obtained for the {pretratamento} Pretreatment stage of {biomassa}. Change the chart layout to visualize more relationships between the variables.")
     
     # Check if model is available for selected combination
@@ -283,7 +283,7 @@ with col3:
     
     # Special handling for Hydrothermal pretreatment
     if pretratamento == "Hydrothermal" and biomassa == "Sugarcane Straw":
-        if st.button("Calculate Hydrothermal Degradation", key="hydrothermal_calc", disabled=not model_available):
+        if st.button("Calculate Hydrothermal Degradation", key="hydrothermal_calc", disabled=not model_available, use_container_width=True):
             try:
                 # Convert percentages to fractions
                 cellulose_frac = celulose / 100.0
@@ -373,7 +373,7 @@ st.markdown("<hr style='border: 1px solid #ccc;' />", unsafe_allow_html=True)
 # Next Stage: Enzymatic Hydrolysis
 
 st.markdown(
-    "<h1 style='font-size:50px;'>Enzymatic Hydrolysis</h1>",
+    "<h1 style='font-size:50px;'>⚗️Enzymatic Hydrolysis</h1>",
     unsafe_allow_html=True
 )
 st.write("In this section, introduce the relevant data for calculating the yield of Enzymatic Hydrolysis.")
@@ -382,7 +382,7 @@ col4, spacer4, col6 = st.columns([6, 1, 10])
 
 # Customizing the unified Parameters column (col4)
 with col4:
-    st.header("Parameters")
+    st.header("📊Parameters")
     
     biomassa_hydrolysis = st.selectbox("Select a biomass type", ['Sugarcane Straw', 'Sugarcane Bagasse'], index=0, key="biomassa_hydrolysis", disabled=False, help="Note: Only Sugarcane Straw model is currently available")
     if biomassa_hydrolysis == 'Sugarcane Bagasse':
@@ -437,7 +437,7 @@ enzyme_types = {"Saccharomyces cerevisiae": 1}
 
 # Customizing the Enzymatic Hydrolysis Results column (col6)
 with col6:
-    st.header("Results")
+    st.header("🎯Results")
     st.write(f"Here you can see the results obtained for the Enzymatic Hydrolysis stage of {biomassa_hydrolysis}. Change the chart layout to visualize more relationships between the variables.")
     
     # Check if model is available for selected biomass
