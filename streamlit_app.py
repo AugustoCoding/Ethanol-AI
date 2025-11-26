@@ -56,7 +56,7 @@ def load_ann_model_and_scalers():
         # Caminhos dos arquivos
         model_path = r"BEPE FAPESP\Genetic ANNs\Straw\Hydrolysis\champion_ann_strategy1_32_32_16.h5"
         data_path = r"BEPE FAPESP\Enzymatic Hydrolysis\Data Generation\synthetic_hydrolysis_data_LHS.csv"
-        
+         
         # Carregar modelo ANN
         champion_model = tf.keras.models.load_model(model_path, compile=False)
         champion_model.compile(optimizer='adam', loss='mse', metrics=['mae'])
