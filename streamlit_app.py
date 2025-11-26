@@ -3,9 +3,12 @@ import streamlit as st
 import pandas as pd
 from plotly import graph_objs as go
 from plotly.subplots import make_subplots
-from scipy.integrate import solve_ivp
-from scipy.optimize import fsolve
+import tensorflow as tf
+from sklearn.preprocessing import MinMaxScaler
 from Hydrothermal_Pretreatment import simulate_hydrothermal_degradation
+
+# Configurando o layout para modo "wide" - DEVE SER O PRIMEIRO COMANDO STREAMLIT
+st.set_page_config(layout="wide")
 
 
 page_bg_img = """
@@ -39,16 +42,70 @@ page_bg_img = """
 </style>
 """
 
+# ============================================================================
+# CARREGAMENTO DO MODELO ANN E SCALERS
+# ============================================================================
 
-def calcular_enzima_equilibrio(E_T: float, S: float, E_max: float, k_ad: float) -> tuple[float, float]:
-    """Calcula enzima livre e adsorvida em equilíbrio"""
-    def equation(E_F):
-        E_B = E_T - E_F
-        return E_max * k_ad * E_F / (1 + k_ad * E_F) - E_B / S
+@st.cache_resource
+def load_ann_model_and_scalers():
+    """
+    Carrega modelo ANN e configura scalers com dados de treinamento.
+    Usa cache para carregar apenas uma vez.
+    """
+    try:
+        # Caminhos dos arquivos
+        model_path = r"BEPE FAPESP\Genetic ANNs\Straw\Hydrolysis\champion_ann_strategy1_32_32_16.h5"
+        data_path = r"BEPE FAPESP\Enzymatic Hydrolysis\Data Generation\synthetic_hydrolysis_data_LHS.csv"
+        
+        # Carregar modelo ANN
+        champion_model = tf.keras.models.load_model(model_path, compile=False)
+        champion_model.compile(optimizer='adam', loss='mse', metrics=['mae'])
+        
+        # Carregar dados de treinamento para ajustar scalers
+        df = pd.read_csv(data_path)
+        df.columns = df.columns.str.strip()
+        
+        # Definir features
+        INPUT_FEATURES = ['Cellulose', 'Hemicellulose', 'Lignin', 'Solids Loading [g/L]', 'Enzyme Loading [g/L]', 'Time [h]']
+        OUTPUT_FEATURES = ['Glucose Concentration [g/L]', 'Xylose Concentration [g/L]', 'Cellobiose Concentration [g/L]']
+        
+        # Preparar e ajustar scalers
+        X_data = df[INPUT_FEATURES].values
+        y_data = df[OUTPUT_FEATURES].values
+        
+        scaler_X = MinMaxScaler(feature_range=(0, 1))
+        scaler_y = MinMaxScaler(feature_range=(0, 1))
+        
+        scaler_X.fit(X_data)
+        scaler_y.fit(y_data)
+        
+        return champion_model, scaler_X, scaler_y, True, None
+        
+    except Exception as e:
+        return None, None, None, False, str(e)
+
+# Carregar modelo ao iniciar app
+champion_model, scaler_X, scaler_y, model_loaded, load_error = load_ann_model_and_scalers()
+
+
+def apply_physical_constraints(predictions: np.ndarray, time_inputs: np.ndarray) -> np.ndarray:
+    """
+    Aplica constraints físicos às predições da ANN.
+    Regra: Se t=0h, então concentrações = [0, 0, 0]
+    """
+    constrained_predictions = predictions.copy()
     
-    E_F = fsolve(equation, 0.1)[0]
-    E_B = E_T - E_F
-    return E_F, E_B
+    # Identificar amostras t=0h (tolerância para comparações float)
+    t0_mask = np.abs(time_inputs) < 1e-6
+    
+    # Aplicar constraint: t=0h → concentrações = [0, 0, 0]
+    if np.any(t0_mask):
+        constrained_predictions[t0_mask] = 0.0
+    
+    # Garantir valores não-negativos para todas as amostras
+    constrained_predictions = np.maximum(constrained_predictions, 0.0)
+    
+    return constrained_predictions
 
 
 def simulate_enzymatic_hydrolysis(
@@ -56,148 +113,62 @@ def simulate_enzymatic_hydrolysis(
     enzyme_loading: float,
     cellulose_percent: float,
     hemicellulose_percent: float,
+    lignin_percent: float,
     reaction_time: float
 ) -> pd.DataFrame:
     """
-    Modelo de hidrólise enzimática - Angarita et al. 2015
-    Implementação idêntica ao notebook Hydrolysis_SAGe.ipynb
+    Modelo de hidrólise enzimática usando Rede Neural ANN.
+    Baseado em champion_ann_strategy1_32_32_16.h5
     """
-
+    
     if reaction_time <= 0:
         raise ValueError("Reaction time must be greater than zero.")
-
+    
     if solid_loading <= 0:
         raise ValueError("Solids loading must be greater than zero.")
-
-    # Condições operacionais
-    S0 = solid_loading
-    Cellulose = cellulose_percent / 100.0
-    Hemicellulose = hemicellulose_percent / 100.0
-    E_T = enzyme_loading
-    alfa = 1.0
-
-    # Parâmetros cinéticos (Angarita et al. 2015)
-    k_1r = 0.177              # Taxa de reação r1 (h⁻¹)
-    k_2r = 8.81               # Taxa de reação r2 (h⁻¹)
-    k_3r = 201.0              # Taxa de reação r3 (h⁻¹)
-    k_4r = 16.34              # Taxa de reação r4 (h⁻¹)
-
-    # Constantes de inibição - Reação 1
-    k_11G2 = 0.402            # Inibição por celobiose (g/L)
-    k_11G = 2.71              # Inibição por glicose (g/L)
-    k_11X = 2.15              # Inibição por xilose (g/L)
-
-    # Constantes de inibição - Reação 2
-    k_21G2 = 119.6            # Inibição por celobiose (g/L)
-    k_21G = 4.69              # Inibição por glicose (g/L)
-    k_21X = 0.095             # Inibição por xilose (g/L)
-
-    # Constantes de Michaelis-Menten - Reação 3
-    k_3M = 26.6               # Constante de Michaelis (g/L)
-    k_31G = 11.06             # Inibição por glicose (g/L)
-    k_31X = 1.023             # Inibição por xilose (g/L)
-
-    # Constantes de inibição - Reação 4
-    k_41G2 = 16.25            # Inibição por celobiose (g/L)
-    k_41G = 4.0               # Inibição por glicose (g/L)
-    k_41X = 154.0             # Inibição por xilose (g/L)
-
-    # Parâmetros de adsorção enzimática
-    k_ad = 7.16               # Constante de adsorção
-    E_max = 8.32/1000         # Capacidade máxima de adsorção (g/L)
-
-    # Calcular enzimas em equilíbrio inicial
-    E_F_inicial, E_B_inicial = calcular_enzima_equilibrio(E_T, S0, E_max, k_ad)
-
-    # Condições iniciais
-    y0 = [
-        S0 * Cellulose,      # Celulose inicial
-        0.0,                 # Celobiose inicial
-        0.0,                 # Glicose inicial
-        S0 * Hemicellulose,  # Hemicelulose inicial
-        0.0,                 # Xilose inicial
-        S0,                  # Biomassa inicial
-        E_B_inicial,         # Enzima adsorvida inicial
-        E_F_inicial          # Enzima livre inicial
-    ]
-
-    def modelo_hidrolise(t, y):
-        """
-        Sistema de ODEs para hidrólise enzimática
-        
-        Variáveis de estado:
-        y[0] = C    - Celulose (g/L)
-        y[1] = G2   - Celobiose (g/L)
-        y[2] = G    - Glicose (g/L)
-        y[3] = H    - Hemicelulose (g/L)
-        y[4] = X    - Xilose (g/L)
-        y[5] = S    - Biomassa total (g/L)
-        y[6] = E_B  - Enzima adsorvida (g/L)
-        y[7] = E_F  - Enzima livre (g/L)
-        """
-        
-        C, G2, G, H, X, S, E_B, E_F = y
-        
-        # Evitar divisão por zero
-        S = max(S, 1e-6)
-        
-        # Fator de resistência
-        R_S = alfa * S / S0
-        
-        # Concentrações de enzima específica
-        Ebc = E_B * C / S     # Enzima específica para celulose
-        Ebh = E_B * H / S     # Enzima específica para hemicelulose
-        
-        # Taxas de reação
-        r1 = k_1r * Ebc * R_S * C / (1 + G2/k_11G2 + G/k_11G + X/k_11X)
-        r2 = k_2r * Ebc * R_S * C / (1 + G2/k_21G2 + G/k_21G + X/k_21X)
-        r3 = k_3r * E_F * G2 / (k_3M * (1 + G/k_31G + X/k_31X) + G2)
-        r4 = k_4r * Ebh * R_S * H / (1 + G2/k_41G2 + G/k_41G + X/k_41X)
-        
-        # Equações diferenciais
-        dCdt = -r1 - r2                 # Celulose
-        dG2dt = 1.056 * r1 - r3         # Celobiose
-        dGdt = 1.111 * r2 + 1.053 * r3  # Glicose
-        dHdt = -r4                      # Hemicelulose
-        dXdt = 1.136 * r4               # Xilose
-        dSdt = -r1 - r2 - r4            # Biomassa
-        
-        # Enzimas (equações algébricas - derivadas = 0)
-        dE_Bdt = 0
-        dE_Fdt = 0
-        
-        return [dCdt, dG2dt, dGdt, dHdt, dXdt, dSdt, dE_Bdt, dE_Fdt]
-
-    # Configuração da simulação - sempre simular até 96h
+    
+    if not model_loaded:
+        raise RuntimeError(f"ANN model could not be loaded: {load_error}")
+    
+    # Converter percentagens para frações (0-1)
+    cellulose_frac = cellulose_percent / 100.0
+    hemicellulose_frac = hemicellulose_percent / 100.0
+    lignin_frac = lignin_percent / 100.0
+    
+    # Gerar array de tempos de 0 a 96h
     t_final_simulation = 96.0
-    t_pontos = np.linspace(0, t_final_simulation, int(t_final_simulation) + 1)
-
-    # Resolver sistema de ODEs
-    sol = solve_ivp(
-        modelo_hidrolise, 
-        [0, t_final_simulation], 
-        y0, 
-        t_eval=t_pontos, 
-        method='LSODA', 
-        rtol=1e-8
-    )
-
-    if not sol.success:
-        raise RuntimeError(f"Hydrolysis simulation failed: {sol.message}")
-
+    time_array = np.linspace(0, t_final_simulation, int(t_final_simulation) + 1)
+    
+    # Preparar features de entrada para cada ponto de tempo
+    # Formato: [Cellulose, Hemicellulose, Lignin, Solids Loading, Enzyme Loading, Time]
+    X = np.array([
+        [cellulose_frac, hemicellulose_frac, lignin_frac, solid_loading, enzyme_loading, t]
+        for t in time_array
+    ])
+    
+    # Normalizar entradas
+    X_scaled = scaler_X.transform(X)
+    
+    # Fazer predições com ANN
+    y_pred_scaled = champion_model.predict(X_scaled, verbose=0)
+    
+    # Desnormalizar predições
+    y_pred = scaler_y.inverse_transform(y_pred_scaled)
+    
+    # Aplicar constraints físicos (t=0 → concentrações=0)
+    y_pred_constrained = apply_physical_constraints(y_pred, time_array)
+    
     # Extrair resultados
     return pd.DataFrame(
         {
-            "Time (h)": sol.t,
-            "Glucose": sol.y[2],
-            "Xylose": sol.y[4],
-            "Cellobiose": sol.y[1],
+            "Time (h)": time_array,
+            "Glucose": y_pred_constrained[:, 0],
+            "Xylose": y_pred_constrained[:, 1],
+            "Cellobiose": y_pred_constrained[:, 2],
         }
     )
 
-# Configurando o layout para modo "wide"
-st.set_page_config(layout="wide")
-
+# Aplicar estilos CSS
 st.markdown(page_bg_img, unsafe_allow_html=True)
 
 # Título do app
@@ -453,6 +424,7 @@ with col6:
                     enzyme_loading=enzyme_loading,
                     cellulose_percent=celulose1,
                     hemicellulose_percent=hemicelulose1,
+                    lignin_percent=lignina1,
                     reaction_time=reaction_time
                 )
 
