@@ -17,7 +17,7 @@
       ]
     }
   },
-  "updateContentCommand": "[ -f packages.txt ] && sudo apt update && sudo apt upgrade -y && sudo xargs apt install -y <packages.txt; [ -f requirements.txt ] && pip3 install --user -r requirements.txt; pip3 install --user streamlit; echo '✅ Packages installed and Requirements met'",
+  "updateContentCommand": "[ -f packages.txt ] && sudo apt update && sudo apt upgrade -y && sudo xargs apt install -y <packages.txt; [ -f requirements.txt ] && pip3 install --user -r requirements.txt; pip3 install --user streamlit; cp 'BEPE FAPESP/Genetic ANNs/Straw/Hydrolysis/champion_ann_strategy1_32_32_16.h5' ./champion_model.h5 2>/dev/null || true; cp 'BEPE FAPESP/Enzymatic Hydrolysis/Data Generation/synthetic_hydrolysis_data_LHS.csv' ./training_data.csv 2>/dev/null || true; echo '✅ Packages installed and Requirements met';",
   "postAttachCommand": {
     "server": "streamlit run streamlit_app.py --server.enableCORS false --server.enableXsrfProtection false"
   },

@@ -52,10 +52,17 @@ def load_ann_model_and_scalers():
     Carrega modelo ANN e configura scalers com dados de treinamento.
     Usa cache para carregar apenas uma vez.
     """
+    import os
     try:
-        # Caminhos dos arquivos
-        model_path = r"BEPE FAPESP\Genetic ANNs\Straw\Hydrolysis\champion_ann_strategy1_32_32_16.h5"
-        data_path = r"BEPE FAPESP\Enzymatic Hydrolysis\Data Generation\synthetic_hydrolysis_data_LHS.csv"
+        # Caminhos dos arquivos - tentar raiz primeiro, depois caminho completo
+        model_path = "champion_model.h5" if os.path.exists("champion_model.h5") else os.path.join("BEPE FAPESP", "Genetic ANNs", "Straw", "Hydrolysis", "champion_ann_strategy1_32_32_16.h5")
+        data_path = "training_data.csv" if os.path.exists("training_data.csv") else os.path.join("BEPE FAPESP", "Enzymatic Hydrolysis", "Data Generation", "synthetic_hydrolysis_data_LHS.csv")
+        
+        # Verificar se arquivos existem
+        if not os.path.exists(model_path):
+            raise FileNotFoundError(f"Model file not found at '{model_path}'. Please ensure the file is in the repository.")
+        if not os.path.exists(data_path):
+            raise FileNotFoundError(f"Training data file not found at '{data_path}'. Please ensure the file is in the repository.")
          
         # Carregar modelo ANN
         champion_model = tf.keras.models.load_model(model_path, compile=False)
