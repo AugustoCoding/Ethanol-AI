@@ -129,11 +129,9 @@ def simulate_hydrothermal_degradation(temperature, solid_loading, cellulose_frac
     cellulose_conc = sol_cell[:, 0]
     hemicellulose_conc = sol_hemi[:, 0]
 
-    # Calcular porcentagens de degradação
+    # Valores finais
     cellulose_final = cellulose_conc[-1]
     hemicellulose_final = hemicellulose_conc[-1]
-    cellulose_degraded = (1 - cellulose_final/C0) * 100 if C0 > 0 else 0
-    hemicellulose_degraded = (1 - hemicellulose_final/H0) * 100 if H0 > 0 else 0
 
     return {
         "time": t,
@@ -143,8 +141,6 @@ def simulate_hydrothermal_degradation(temperature, solid_loading, cellulose_frac
         "initial_hemicellulose": H0,
         "final_cellulose": cellulose_final,
         "final_hemicellulose": hemicellulose_final,
-        "cellulose_degraded_percent": cellulose_degraded,
-        "hemicellulose_degraded_percent": hemicellulose_degraded,
         "temperature": temperature,
         "solid_loading": solid_loading,
         "time_final": time_final
@@ -167,11 +163,7 @@ def create_hydrothermal_plot_data(results):
         "hemicellulose": results["hemicellulose"].tolist(),
         "title": f'Degradação Hidrotérmica a {results["temperature"]}°C',
         "subtitle": f'Carga de sólidos: {results["solid_loading"]} g/L',
-        "degradation_info": {
-            "cellulose_percent": results["cellulose_degraded_percent"],
-            "hemicellulose_percent": results["hemicellulose_degraded_percent"],
-            "time_final": results["time_final"]
-        }
+        "time_final": results["time_final"]
     }
 
 # Função auxiliar para converter string de temperatura para número
@@ -202,7 +194,19 @@ if __name__ == "__main__":
         )
         
         print("Teste da função realizado com sucesso!")
-        print(f"Degradação da celulose: {results['cellulose_degraded_percent']:.1f}%")
-        print(f"Degradação da hemicelulose: {results['hemicellulose_degraded_percent']:.1f}%")
+        print(f"\nConcentrações iniciais:")
+        print(f"  Celulose: {results['initial_cellulose']:.2f} g/L")
+        print(f"  Hemicelulose: {results['initial_hemicellulose']:.2f} g/L")
+        print(f"\nConcentrações finais (t={results['time_final']}min):")
+        print(f"  Celulose: {results['final_cellulose']:.2f} g/L")
+        print(f"  Hemicelulose: {results['final_hemicellulose']:.2f} g/L")
+        
+        # Calcular degradação localmente para exibição
+        cellulose_degraded_pct = (1 - results['final_cellulose']/results['initial_cellulose']) * 100 if results['initial_cellulose'] > 0 else 0
+        hemicellulose_degraded_pct = (1 - results['final_hemicellulose']/results['initial_hemicellulose']) * 100 if results['initial_hemicellulose'] > 0 else 0
+        
+        print(f"\nDegradação calculada:")
+        print(f"  Celulose: {cellulose_degraded_pct:.1f}%")
+        print(f"  Hemicelulose: {hemicellulose_degraded_pct:.1f}%")
     except Exception as e:
         print(f"Erro no teste: {e}")
