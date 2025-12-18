@@ -10,7 +10,7 @@ def simulate_hydrothermal_degradation(temperature, solid_loading, cellulose_frac
     Simula a degradação hidrotérmica de celulose e hemicelulose.
     
     Args:
-        temperature (int): Temperatura em °C (180, 195, 210).
+        temperature (float): Temperatura em °C (180-210, contínua).
         solid_loading (float): Carga de sólidos em g/L.
         cellulose_fraction (float): Fração mássica de celulose (0-1).
         hemicellulose_fraction (float): Fração mássica de hemicelulose (0-1).
@@ -91,9 +91,9 @@ def simulate_hydrothermal_degradation(temperature, solid_loading, cellulose_frac
     # CONFIGURAÇÃO DA SIMULAÇÃO
     # =============================================================================
 
-    # Validação de temperatura
-    if temperature not in [180, 195, 210]:
-        raise ValueError("Temperatura deve ser 180, 195 ou 210°C")
+    # Validação de temperatura (agora aceita valores contínuos)
+    if not (180 <= temperature <= 210):
+        raise ValueError("Temperatura deve estar entre 180 e 210°C")
 
     # Concentrações iniciais
     C0 = solid_loading * cellulose_fraction
@@ -106,10 +106,16 @@ def simulate_hydrothermal_degradation(temperature, solid_loading, cellulose_frac
     # Vetor de tempo
     t = np.linspace(0, time_final, 200)
 
-    # Obter parâmetros cinéticos para a temperatura escolhida
-    temp_idx = df_kn_hemicellulose[df_kn_hemicellulose['Temperature (°C)'] == temperature].index[0]
-    k_hemi = df_kn_hemicellulose.iloc[temp_idx, 1:].values
-    k_cell = df_kn_cellulose.iloc[temp_idx, 1:].values
+    # Interpolar parâmetros cinéticos para temperatura contínua
+    temps = df_kn_hemicellulose['Temperature (°C)'].values
+    k_hemi = np.array([
+        np.interp(temperature, temps, df_kn_hemicellulose[f'k{i} (1/min)'].values)
+        for i in range(1, 7)
+    ])
+    k_cell = np.array([
+        np.interp(temperature, temps, df_kn_cellulose[f'k{i} (1/min)'].values)
+        for i in range(1, 7)
+    ])
 
     # =============================================================================
     # SIMULAÇÃO
