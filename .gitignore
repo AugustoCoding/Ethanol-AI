@@ -20,3 +20,6 @@ data/synthetic/*.npz
 
 # Testes
 .pytest_cache/
+
+# Artigos de referência (direito autoral da editora; ver docs/references/README.md)
+docs/references/*.pdf

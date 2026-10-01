@@ -46,6 +46,6 @@ Reproducing everything from the raw data: [`pipeline/README.md`](pipeline/README
 ├── reports/              # Calibration and evaluation reports with figures
 ├── tests/                # pytest: physics, fidelity to the kinetic models, app smoke tests
 ├── assets/style.css      # App styling (theme colors and fonts are in .streamlit/config.toml)
-├── docs/                 # Methodology and reference articles
+├── docs/                 # Methodology and references (article PDFs are not versioned)
 └── research/             # Original notebooks of the scientific initiation (history, not used by the app)
 ```

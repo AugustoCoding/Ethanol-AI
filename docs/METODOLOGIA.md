@@ -27,7 +27,7 @@ Cada etapa é um script em `pipeline/` (ver `pipeline/README.md`). Os relatório
 
 ### Pré-tratamento hidrotérmico
 
-Rocha et al. (2017), *Bioresource Technology* 228:176-185 (`docs/references/pretreatment_article.pdf`).
+Rocha et al. (2017), *Bioresource Technology* 228:176-185 ([doi:10.1016/j.biortech.2016.12.087](https://doi.org/10.1016/j.biortech.2016.12.087); referências completas em `docs/references/README.md`).
 Reator Parr de 5,5 L, palha de cana com 34,8% de celulose, 23,0% de hemicelulose, 24,1% de lignina,
 14,9% de extrativos e 7,1% de cinzas, sólido:líquido 1:10 (100 g/L), 180, 195 e 210 °C, amostras
 do licor em 0, 5, 10, 15, 20, 30 e 40 min **após o reator atingir a temperatura**. Foram medidos
@@ -93,7 +93,7 @@ Resultados em `reports/pretreatment_calibration.md`.
 
 ## 4. Modelo da hidrólise (`ethanol_ai/hydrolysis.py`)
 
-Estrutura de Angarita et al. (2015), da família de Kadam et al. (2004): quatro reações (celulose →
+Estrutura de Angarita et al. (2015, [doi:10.1016/j.bej.2015.05.021](https://doi.org/10.1016/j.bej.2015.05.021)), da família de Kadam et al. (2004): quatro reações (celulose →
 celobiose, celulose → glicose, celobiose → glicose, xilana → xilose), adsorção de Langmuir,
 inibição por glicose, celobiose e xilose, e reatividade do substrato `R_S = (S/S0)^γ`.
 
