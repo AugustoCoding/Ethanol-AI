@@ -396,7 +396,7 @@ with col3:
     
     # Special handling for Hydrothermal pretreatment
     if pretratamento == "Hydrothermal" and biomassa == "Sugarcane Straw":
-        if st.button("Calculate Hydrothermal Degradation", key="hydrothermal_calc", disabled=not model_available, use_container_width=True):
+        if st.button("Simulate Pretreatment Profile", key="hydrothermal_calc", disabled=not model_available, use_container_width=True):
             try:
                 # Run simulation with ANN
                 results = simulate_pretreatment_ann(
@@ -407,9 +407,6 @@ with col3:
                     lignin_percent=lignina,
                     time_final=time_hydro
                 )
-                
-                # Display results
-                st.success("Simulation completed successfully!")
                 
                 # Encontrar índice correspondente ao tempo escolhido
                 time_idx = int(round(time_hydro))
@@ -531,7 +528,7 @@ with col4:
     biomassa_hydrolysis = st.selectbox("Select a biomass type", ['Sugarcane Straw', 'Sugarcane Bagasse'], index=0, key="biomassa_hydrolysis", disabled=False, help="Note: Only Sugarcane Straw model is currently available")
     if biomassa_hydrolysis == 'Sugarcane Bagasse':
         st.warning("⚠️ Sugarcane Bagasse model is not yet available for Enzymatic Hydrolysis")
-    enzyme = st.selectbox("Enzyme", ['Saccharomyces cerevisiae'])
+    enzyme = st.selectbox("Enzyme", ['Cellic CTEC-2 (Novozymes)'])
     celulose1 = st.number_input(
         "Cellulose Percentage",
         min_value=45.0,
@@ -577,7 +574,7 @@ with col4:
     )
 
 # Alteration 3: Mapping selection options to numerical values before using them (no longer needed for simplified version)
-enzyme_types = {"Saccharomyces cerevisiae": 1}
+enzyme_types = {"Cellic CTEC-2 (Novozymes)": 1}
 
 # Customizing the Enzymatic Hydrolysis Results column (col6)
 with col6:
