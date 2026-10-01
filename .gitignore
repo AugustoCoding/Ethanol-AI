@@ -14,3 +14,6 @@ venv/
 .DS_Store
 Thumbs.db
 desktop.ini
+
+# Artigos de referência (direito autoral da editora; ver docs/references/README.md)
+docs/references/*.pdf

@@ -18,7 +18,7 @@ Instructions for the application will be available here.
 ├── assets/style.css      # App styling (theme colors and fonts are in .streamlit/config.toml)
 ├── models/               # Trained ANNs loaded by the app
 ├── data/                 # Synthetic LHS datasets (used by the app to fit the scalers)
-├── docs/references/      # Reference articles
+├── docs/references/      # Reference list with DOIs (article PDFs are not versioned)
 └── research/             # Research notebooks (not used by the app)
     ├── 01_pretreatment/          # Hydrothermal kinetic model and LHS data generation
     ├── 02_enzymatic_hydrolysis/  # Hydrolysis models, experimental data and LHS
