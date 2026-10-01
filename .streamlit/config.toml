@@ -1,6 +1,12 @@
 [theme]
-primaryColor="#00aeffff"
-backgroundColor="#FFFFFF"
-secondaryBackgroundColor="#F0F2F6"
-textColor="#080a17ff"
-font="sans serif"
+base = "light"
+primaryColor = "#0F766E"
+backgroundColor = "#F5F8F6"
+secondaryBackgroundColor = "#EDF3F0"
+textColor = "#10231D"
+linkColor = "#0F766E"
+borderColor = "#D9E4DF"
+showWidgetBorder = true
+baseRadius = "0.75rem"
+font = "Inter:https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+headingFont = "Plus Jakarta Sans:https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&display=swap"

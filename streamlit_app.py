@@ -11,41 +11,9 @@ from sklearn.preprocessing import MinMaxScaler
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 MODELS_DIR = os.path.join(BASE_DIR, "models")
 DATA_DIR = os.path.join(BASE_DIR, "data")
+ASSETS_DIR = os.path.join(BASE_DIR, "assets")
 
-# Configurando o layout para modo "wide" - DEVE SER O PRIMEIRO COMANDO STREAMLIT
-st.set_page_config(layout="wide")
-
-
-page_bg_img = """
-<style>
-[data-testid="stAppViewContainer"] {
-    background: linear-gradient(rgba(255, 255, 255, 0), rgba(255, 255, 255, 0)),
-                url("https://images.unsplash.com/photo-1675251171768-5d49233cc410?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=764");
-    background-size: cover;
-    background-attachment: fixed;
-}
-
-[data-testid="stHeader"] {
-    background-color: rgba(0, 0, 0, 0);
-}
-
-/* Garantir que o conteudo aparece sobre o fundo */
-[data-testid="stToolbar"] {
-    z-index: 1;
-}
-
-/* Bordas arredondadas nos gráficos Plotly */
-.js-plotly-plot .plotly {
-    border-radius: 15px;
-    overflow: hidden;
-}
-
-[data-testid="stPlotlyChart"] > div {
-    border-radius: 15px;
-    overflow: hidden;
-}
-</style>
-"""
+st.set_page_config(page_title="Ethanol AI", page_icon="⚗️", layout="wide")
 
 # ============================================================================
 # CARREGAMENTO DO MODELO ANN E SCALERS
@@ -180,6 +148,7 @@ def apply_physical_constraints_pretreatment(
     return constrained_predictions
 
 
+@st.cache_data(show_spinner=False)
 def simulate_pretreatment_ann(
     temperature: float,
     solid_loading: float,
@@ -252,6 +221,7 @@ def simulate_pretreatment_ann(
     }
 
 
+@st.cache_data(show_spinner=False)
 def simulate_enzymatic_hydrolysis(
     solid_loading: float,
     enzyme_loading: float,
@@ -312,378 +282,373 @@ def simulate_enzymatic_hydrolysis(
         }
     )
 
-# Aplicar estilos CSS
-st.markdown(page_bg_img, unsafe_allow_html=True)
 
-# Título do app
-st.markdown("""
-<style>
-/* Main title */
-.main-title {
-    background: linear-gradient(135deg, #1e3c72, #2c3e50, #27ae60, #3498db);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    text-align: center;
-    font-size: 4em !important;
-    font-weight: 800 !important;
-    margin-bottom: 30px !important;
-    text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+# ============================================================================
+# ESTILO DOS GRÁFICOS
+# ============================================================================
+
+# Paleta categórica validada (contraste e daltonismo) sobre fundo branco.
+# A cor acompanha a substância: celulose → glicose (azul), hemicelulose → xilose (laranja).
+SERIES_COLORS = {
+    "Cellulose": "#2a78d6",
+    "Hemicellulose": "#eb6834",
+    "Glucose": "#2a78d6",
+    "Xylose": "#eb6834",
+    "Cellobiose": "#1baf7a",
 }
-</style>
+INK = "#10231D"
+INK_SECONDARY = "#47605A"
+MUTED = "#7A8C86"
+GRID = "#E6ECE9"
+AXIS = "#C9D5D0"
+CHART_FONT = "Inter, system-ui, sans-serif"
+PLOTLY_CONFIG = {"displaylogo": False, "displayModeBar": False}
 
-<h1 class='main-title'>Ethanol AI</h1>
-""", unsafe_allow_html=True)
 
-# Informação principal
-st.write("Ethanol AI is a tool created within a research program called scientific initiation by researchers from UFSCar and DTU with funding from FAPESP. It is particularly useful for studying the behavior of different second-generation ethanol production processes when subjected to various operating conditions. This software implements hybrid machine learning models, previously trained using knowledge generated from previous research works at UFSCar and abroad, to predict the outcomes. Here, you can test different combinations of initial conditions, essentially finding the maximum possible yield for each situation.")
-st.markdown("<hr style='border: 1px solid #ccc;' />", unsafe_allow_html=True)
-
-# Etapa de Pré-Tratamento
-st.markdown(
-    "<h1 style='font-size:50px;'>♨️Pretreatment</h1>",
-    unsafe_allow_html=True
-)
-st.write("In this section, introduce the relevant data for calculating the yield of the Pre-Treatment.")
-
-# Criando colunas "Parâmetros" e "Resultados"
-col1, spacer, col3 = st.columns([6, 1, 10])
-
-# Customizing the unified Parameters column (col1)
-with col1:
-    st.header("📊Parameters")
-    
-    # Initial Data section
-    biomassa = st.selectbox("Select a biomass type", ['Sugarcane Straw', 'Sugarcane Bagasse'], index=0, help="Note: Only Sugarcane Straw with Hydrothermal pretreatment is currently available")
-    if biomassa == 'Sugarcane Bagasse':
-        st.warning("⚠️ Sugarcane Bagasse models are not yet available for Pre-Treatment")
-    pretratamento = st.selectbox("Select a Pre-Treatment type", ['Hydrothermal', 'Organosolv'], index=0, help="Note: Organosolv model is under development")
-    if pretratamento == 'Organosolv':
-        st.warning("⚠️ Organosolv pretreatment model is not yet available")
-    celulose = st.number_input("Cellulose Percentage (0.00 - 100.00) (%)", min_value=0.0, max_value=100.0, value=40.0, format="%.2f")
-    hemicelulose = st.number_input("Hemicellulose Percentage (0.00 - 100.00) (%)", min_value=0.0, max_value=100.0, value=30.0, format="%.2f")
-    lignina = st.number_input("Lignin Percentage (0.00 - 100.00) (%)", min_value=0.0, max_value=100.0, value=20.0, format="%.2f")
-
-    # Universal pretreatment parameters
-    solid_loading_hydro = st.number_input(
-        "Solid Loading (g/L)",
-        min_value=1.0,
-        max_value=500.0,
-        value=100.0,
-        format="%.2f"
+def style_figure(fig: go.Figure, height: int) -> go.Figure:
+    """Aplica o visual padrão do app a um gráfico Plotly."""
+    fig.update_layout(
+        template="plotly_white",
+        height=height,
+        margin=dict(l=8, r=8, t=72, b=8),
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)",
+        font=dict(family=CHART_FONT, size=13, color=INK_SECONDARY),
+        legend=dict(orientation="h", yanchor="top", y=0.99, yref="container", xanchor="left", x=0, font=dict(color=INK)),
+        hovermode="x unified",
+        hoverlabel=dict(bgcolor="white", bordercolor=AXIS, font=dict(family=CHART_FONT, color=INK)),
     )
-    temperature_hydro = st.number_input(
-        "Temperature (°C)",
-        min_value=180.0,
-        max_value=210.0,
-        value=195.0,
-        format="%.1f",
-        help="Temperature range: 180-210°C (ANN will extrapolate if needed)"
+    fig.update_xaxes(
+        showgrid=False, showline=True, linecolor=AXIS, ticks="outside", tickcolor=AXIS,
+        zeroline=False, title_font=dict(color=MUTED, size=12),
     )
-    time_hydro = st.number_input(
-        "Time (min)",
-        min_value=1.0,
-        max_value=60.0,
-        value=15.0,
-        format="%.1f",
-        help="Maximum simulation time: 60 minutes"
+    fig.update_yaxes(
+        showgrid=True, gridcolor=GRID, gridwidth=1, showline=False, zeroline=False,
+        rangemode="tozero", title_font=dict(color=MUTED, size=12),
+    )
+    return fig
+
+
+def add_series(fig: go.Figure, x, y, name: str, unit: str, **subplot) -> None:
+    """Linha de uma substância, com a cor fixa da paleta."""
+    fig.add_trace(
+        go.Scatter(
+            x=x, y=y, mode="lines", name=name,
+            line=dict(color=SERIES_COLORS[name], width=2),
+            hovertemplate=f"%{{y:.2f}} {unit}",
+        ),
+        **subplot,
     )
 
-# Customizing the Pre-Treatment Results column (col3)
 
-with col3:
-    st.header("🎯Results")
-    st.write(f"Here you can see the results obtained for the {pretratamento} Pretreatment stage of {biomassa}. Change the chart layout to visualize more relationships between the variables.")
-    
-    # Check if model is available for selected combination
-    model_available = (pretratamento == "Hydrothermal" and biomassa == "Sugarcane Straw")
-    
-    # Special handling for Hydrothermal pretreatment
-    if pretratamento == "Hydrothermal" and biomassa == "Sugarcane Straw":
-        if st.button("Simulate Pretreatment Profile", key="hydrothermal_calc", disabled=not model_available, use_container_width=True):
-            try:
-                # Run simulation with ANN
-                results = simulate_pretreatment_ann(
-                    temperature=temperature_hydro,
-                    solid_loading=solid_loading_hydro,
-                    cellulose_percent=celulose,
-                    hemicellulose_percent=hemicelulose,
-                    lignin_percent=lignina,
-                    time_final=time_hydro
-                )
-                
-                # Encontrar índice correspondente ao tempo escolhido
-                time_idx = int(round(time_hydro))
-                cellulose_at_time = results['cellulose'][time_idx]
-                hemicellulose_at_time = results['hemicellulose'][time_idx]
-                
-                # Calcular concentrações iniciais
-                C0 = solid_loading_hydro * (celulose / 100.0)
-                H0 = solid_loading_hydro * (hemicelulose / 100.0)
-                
-                # Calcular degradação no tempo escolhido
-                cellulose_degraded_at_time = ((C0 - cellulose_at_time) / C0 * 100) if C0 > 0 else 0
-                hemicellulose_degraded_at_time = ((H0 - hemicellulose_at_time) / H0 * 100) if H0 > 0 else 0
-                
-                col_a, col_b = st.columns(2)
-                
-                with col_a:
-                    st.metric(
-                        label=f"Cellulose Degradation at {time_hydro:.1f} min",
-                        value=f"{cellulose_degraded_at_time:.1f}%",
-                        help="Percentage of cellulose degraded at selected time"
-                    )
-                    st.metric(
-                        label=f"Cellulose at {time_hydro:.1f} min",
-                        value=f"{cellulose_at_time:.1f} g/L",
-                        help="Remaining cellulose concentration at selected time"
-                    )
-                
-                with col_b:
-                    st.metric(
-                        label=f"Hemicellulose Degradation at {time_hydro:.1f} min",
-                        value=f"{hemicellulose_degraded_at_time:.1f}%",
-                        help="Percentage of hemicellulose degraded at selected time"
-                    )
-                    st.metric(
-                        label=f"Hemicellulose at {time_hydro:.1f} min",
-                        value=f"{hemicellulose_at_time:.1f} g/L",
-                        help="Remaining hemicellulose concentration at selected time"
-                    )
-                
-                # Create and display plot
-                fig = go.Figure()
-                
-                fig.add_trace(go.Scatter(
-                    x=results["time"],
-                    y=results["cellulose"],
-                    mode='lines',
-                    name='Cellulose',
-                    line=dict(color='blue', width=3)
-                ))
-                
-                fig.add_trace(go.Scatter(
-                    x=results["time"],
-                    y=results["hemicellulose"],
-                    mode='lines',
-                    name='Hemicellulose',
-                    line=dict(color='green', width=3)
-                ))
-                
-                # Adicionar linha vertical no tempo escolhido pelo usuário
-                fig.add_vline(
-                    x=time_hydro,
-                    line_dash="dash",
-                    line_color="red",
-                    line_width=2,
-                    annotation_text=f"Selected Time: {time_hydro:.1f} min",
-                    annotation_position="top"
-                )
-                
-                fig.update_layout(
-                    title={
-                        'text': f'Cellulose and Hemicellulose Concentration at {temperature_hydro}°C',
-                        'x': 0.5,
-                        'xanchor': 'center'
-                    },
-                    xaxis_title='Time (min)',
-                    yaxis_title='Concentration (g/L)',
-                    hovermode='x unified'
-                )
-                
-                st.plotly_chart(fig, use_container_width=True)
-                
-                # Criar tabela com os dados
-                with st.expander("📊 View Data Table"):
-                    pretreat_df = pd.DataFrame({
-                        'Time (min)': results['time'],
-                        'Cellulose (g/L)': results['cellulose'],
-                        'Hemicellulose (g/L)': results['hemicellulose']
-                    })
-                    st.dataframe(pretreat_df.round(3))
-                
-            except Exception as e:
-                st.error(f"Error in simulation: {str(e)}")
-                st.info("Please check your input parameters and try again.")
-    
+def add_point(fig: go.Figure, x: float, y: float, name: str, **subplot) -> None:
+    """Destaca o valor de uma série no tempo selecionado."""
+    fig.add_trace(
+        go.Scatter(
+            x=[x], y=[y], mode="markers", showlegend=False, hoverinfo="skip",
+            marker=dict(size=10, color=SERIES_COLORS[name], line=dict(color="white", width=2)),
+        ),
+        **subplot,
+    )
+
+
+def add_time_marker(fig: go.Figure, x: float, label: str | None = None, **subplot) -> None:
+    """Linha vertical de referência no tempo selecionado."""
+    kwargs = dict(x=x, line_dash="dot", line_color=INK_SECONDARY, line_width=1, **subplot)
+    if label:
+        kwargs.update(annotation_text=label, annotation_position="top", annotation_font=dict(color=INK_SECONDARY, size=12))
+    fig.add_vline(**kwargs)
+
+
+# ============================================================================
+# COMPONENTES DE INTERFACE
+# ============================================================================
+
+def section_head(number: str, title: str, text: str) -> None:
+    st.html(f'<div class="section-head"><span class="section-num">{number}</span><div><h2>{title}</h2><p>{text}</p></div></div>')
+
+
+def card_header(title: str, subtitle: str) -> None:
+    st.html(f'<p class="card-title">{title}</p><p class="card-subtitle">{subtitle}</p>')
+
+
+def group_label(text: str, first: bool = False) -> None:
+    st.html(f'<p class="group-label{" first" if first else ""}">{text}</p>')
+
+
+def empty_state(title: str, text: str) -> None:
+    st.html(f'<div class="empty-state"><strong>{title}</strong>{text}</div>')
+
+
+def composition_check(total: float) -> None:
+    if total > 100.0:
+        st.warning(f"Components add up to {total:.1f}%. The sum should not exceed 100%.", icon=":material/warning:")
     else:
-        # For other pretreatment types, show info message
-        if biomassa == 'Sugarcane Bagasse':
-            st.info("ℹ️ Models for Sugarcane Bagasse are under development.")
-        elif pretratamento == "Organosolv":
-            st.info(f"ℹ️ Organosolv pretreatment model for {biomassa} is under development.")
-    
-st.markdown("<hr style='border: 1px solid #ccc;' />", unsafe_allow_html=True)
+        st.caption(f"Sum of components: {total:.1f}%")
 
-# Next Stage: Enzymatic Hydrolysis
 
-st.markdown(
-    "<h1 style='font-size:50px;'>⚗️Enzymatic Hydrolysis</h1>",
-    unsafe_allow_html=True
+def data_table(df: pd.DataFrame, file_name: str) -> None:
+    with st.expander("Data table", icon=":material/table_chart:"):
+        st.dataframe(df.round(3), hide_index=True)
+        st.download_button(
+            "Download CSV", df.to_csv(index=False).encode("utf-8"), file_name=file_name,
+            mime="text/csv", icon=":material/download:",
+        )
+
+
+# ============================================================================
+# PÁGINA
+# ============================================================================
+
+with open(os.path.join(ASSETS_DIR, "style.css"), encoding="utf-8") as css_file:
+    st.html(f"<style>{css_file.read()}</style>")
+
+ABOUT_TEXT = (
+    "Ethanol AI is a tool created within a research program called scientific initiation by researchers "
+    "from UFSCar and DTU with funding from FAPESP. It is particularly useful for studying the behavior of "
+    "different second-generation ethanol production processes when subjected to various operating conditions. "
+    "This software implements hybrid machine learning models, previously trained using knowledge generated "
+    "from previous research works at UFSCar and abroad, to predict the outcomes. Here, you can test different "
+    "combinations of initial conditions, essentially finding the maximum possible yield for each situation."
 )
-st.write("In this section, introduce the relevant data for calculating the yield of Enzymatic Hydrolysis.")
-# Creating "Parameters" and "Results" columns
-col4, spacer4, col6 = st.columns([6, 1, 10])
 
-# Customizing the unified Parameters column (col4)
-with col4:
-    st.header("📊Parameters")
-    
-    biomassa_hydrolysis = st.selectbox("Select a biomass type", ['Sugarcane Straw', 'Sugarcane Bagasse'], index=0, key="biomassa_hydrolysis", disabled=False, help="Note: Only Sugarcane Straw model is currently available")
-    if biomassa_hydrolysis == 'Sugarcane Bagasse':
-        st.warning("⚠️ Sugarcane Bagasse model is not yet available for Enzymatic Hydrolysis")
-    enzyme = st.selectbox("Enzyme", ['Cellic CTEC-2 (Novozymes)'])
-    celulose1 = st.number_input(
-        "Cellulose Percentage",
-        min_value=45.0,
-        max_value=65.0,
-        value=55.0,
-        format="%.2f",
-        placeholder="45.00 – 65.00"
+st.html(f"""
+<section class="hero">
+  <div class="hero-badges">
+    <span class="hero-badge">UFSCar</span><span class="hero-badge">DTU</span><span class="hero-badge">FAPESP</span>
+  </div>
+  <h1 class="hero-title">Ethanol <span>AI</span></h1>
+  <p class="hero-tagline">Simulate second-generation ethanol production from sugarcane residues with hybrid machine-learning models.</p>
+  <p class="hero-text">{ABOUT_TEXT}</p>
+  <div class="pipeline">
+    <span class="pipeline-step"><span class="num">01</span>Hydrothermal pretreatment</span>
+    <span class="pipeline-arrow">&rarr;</span>
+    <span class="pipeline-step"><span class="num">02</span>Enzymatic hydrolysis</span>
+    <span class="pipeline-arrow">&rarr;</span>
+    <span class="pipeline-step soon"><span class="num">03</span>Fermentation<em>In development</em></span>
+  </div>
+</section>
+""")
+
+if not model_loaded:
+    st.error(f"The ANN models could not be loaded: {load_error}", icon=":material/error:")
+
+tab_pre, tab_hyd = st.tabs([
+    ":material/local_fire_department: Pretreatment",
+    ":material/science: Enzymatic hydrolysis",
+])
+
+# ----------------------------------------------------------------------------
+# Etapa 1: Pré-tratamento
+# ----------------------------------------------------------------------------
+with tab_pre:
+    section_head(
+        "01", "Hydrothermal pretreatment",
+        "Predict how much cellulose and hemicellulose remain in the biomass over the course of the pretreatment.",
     )
-    lignina1 = st.number_input("Lignin Percentage", min_value=0.0, max_value=100.0, value=25.0, format="%.2f")
-    hemicelulose1 = st.number_input(
-        "Hemicellulose Percentage",
-        min_value=5.0,
-        max_value=15.0,
-        value=8.0,
-        format="%.2f",
-        placeholder="05.00 – 15.00"
+    col_params, col_results = st.columns([1, 2], gap="large")
+
+    with col_params:
+        with st.container(key="card-pre-params"):
+            card_header("Parameters", "Feedstock, composition and operating conditions")
+
+            group_label("Feedstock", first=True)
+            biomassa = st.selectbox(
+                "Biomass", ['Sugarcane Straw', 'Sugarcane Bagasse'], key="pre_biomass",
+                help="Note: Only Sugarcane Straw with Hydrothermal pretreatment is currently available",
+            )
+            pretratamento = st.selectbox(
+                "Pretreatment", ['Hydrothermal', 'Organosolv'], key="pre_type",
+                help="Note: Organosolv model is under development",
+            )
+
+            group_label("Composition (% w/w)")
+            celulose = st.number_input("Cellulose (%)", min_value=0.0, max_value=100.0, value=40.0, format="%.2f", key="pre_cellulose")
+            hemicelulose = st.number_input("Hemicellulose (%)", min_value=0.0, max_value=100.0, value=30.0, format="%.2f", key="pre_hemicellulose")
+            lignina = st.number_input("Lignin (%)", min_value=0.0, max_value=100.0, value=20.0, format="%.2f", key="pre_lignin")
+            composition_check(celulose + hemicelulose + lignina)
+
+            group_label("Operating conditions")
+            solid_loading_hydro = st.number_input(
+                "Solids loading (g/L)", min_value=1.0, max_value=500.0, value=100.0, format="%.2f", key="pre_solids",
+            )
+            temperature_hydro = st.slider(
+                "Temperature (°C)", min_value=180.0, max_value=210.0, value=195.0, step=0.5, format="%.1f",
+                key="pre_temperature", help="Temperature range: 180-210°C",
+            )
+            time_hydro = st.slider(
+                "Time (min)", min_value=1.0, max_value=60.0, value=15.0, step=0.5, format="%.1f",
+                key="pre_time", help="Maximum simulation time: 60 minutes",
+            )
+
+    with col_results:
+        with st.container(key="card-pre-results"):
+            card_header(
+                "Results",
+                f"{biomassa} · {pretratamento} · {temperature_hydro:.1f} °C · {solid_loading_hydro:.0f} g/L · t = {time_hydro:.1f} min",
+            )
+
+            if not (pretratamento == "Hydrothermal" and biomassa == "Sugarcane Straw"):
+                if biomassa == 'Sugarcane Bagasse':
+                    empty_state("Model under development", "Models for Sugarcane Bagasse are not available yet.")
+                else:
+                    empty_state("Model under development", f"The Organosolv pretreatment model for {biomassa} is not available yet.")
+            else:
+                try:
+                    results = simulate_pretreatment_ann(
+                        temperature=temperature_hydro,
+                        solid_loading=solid_loading_hydro,
+                        cellulose_percent=celulose,
+                        hemicellulose_percent=hemicelulose,
+                        lignin_percent=lignina,
+                        time_final=time_hydro,
+                    )
+                except Exception as e:
+                    st.error(f"Error in simulation: {e}", icon=":material/error:")
+                else:
+                    # Valores no tempo escolhido
+                    cellulose_at_time = float(np.interp(time_hydro, results['time'], results['cellulose']))
+                    hemicellulose_at_time = float(np.interp(time_hydro, results['time'], results['hemicellulose']))
+
+                    C0 = solid_loading_hydro * (celulose / 100.0)
+                    H0 = solid_loading_hydro * (hemicelulose / 100.0)
+                    cellulose_degraded = ((C0 - cellulose_at_time) / C0 * 100) if C0 > 0 else 0
+                    hemicellulose_degraded = ((H0 - hemicellulose_at_time) / H0 * 100) if H0 > 0 else 0
+
+                    with st.container(horizontal=True, gap="small", key="metrics-pre"):
+                        st.metric("Cellulose degraded", f"{cellulose_degraded:.1f}%")
+                        st.metric("Hemicellulose degraded", f"{hemicellulose_degraded:.1f}%")
+                        st.metric("Cellulose remaining", f"{cellulose_at_time:.1f} g/L")
+                        st.metric("Hemicellulose remaining", f"{hemicellulose_at_time:.1f} g/L")
+
+                    fig = go.Figure()
+                    add_series(fig, results["time"], results["cellulose"], "Cellulose", "g/L")
+                    add_series(fig, results["time"], results["hemicellulose"], "Hemicellulose", "g/L")
+                    add_point(fig, time_hydro, cellulose_at_time, "Cellulose")
+                    add_point(fig, time_hydro, hemicellulose_at_time, "Hemicellulose")
+                    add_time_marker(fig, time_hydro, f"t = {time_hydro:.1f} min")
+                    style_figure(fig, height=420)
+                    fig.update_xaxes(title_text="Time (min)")
+                    fig.update_yaxes(title_text="Concentration (g/L)")
+                    st.plotly_chart(fig, width="stretch", theme=None, config=PLOTLY_CONFIG)
+
+                    data_table(
+                        pd.DataFrame({
+                            'Time (min)': results['time'],
+                            'Cellulose (g/L)': results['cellulose'],
+                            'Hemicellulose (g/L)': results['hemicellulose'],
+                        }),
+                        "pretreatment_profile.csv",
+                    )
+
+# ----------------------------------------------------------------------------
+# Etapa 2: Hidrólise enzimática
+# ----------------------------------------------------------------------------
+with tab_hyd:
+    section_head(
+        "02", "Enzymatic hydrolysis",
+        "Predict the release of glucose, xylose and cellobiose during the enzymatic hydrolysis of the pretreated biomass.",
     )
-    
-    # Simplified parameters for all conditions
-    solid_loading = st.number_input(
-        "Initial Solids Loading (g/L)",
-        min_value=50.0,
-        max_value=250.0,
-        value=175.0,
-        format="%.2f",
-        placeholder="50.00 – 250.00"
-    )
-    enzyme_loading = st.number_input(
-        "Initial Enzyme Loading (g/L)",
-        min_value=0.05,
-        max_value=1.2,
-        value=0.5,
-        format="%.2f",
-        placeholder="0.05 – 1.20"
-    )
-    reaction_time = st.number_input(
-        "Reaction Time (h)",
-        min_value=0.0,
-        max_value=96.0,
-        value=60.0,
-        format="%.2f",
-        placeholder="0.00 – 96.00"
-    )
+    col_params, col_results = st.columns([1, 2], gap="large")
 
-# Alteration 3: Mapping selection options to numerical values before using them (no longer needed for simplified version)
-enzyme_types = {"Cellic CTEC-2 (Novozymes)": 1}
+    with col_params:
+        with st.container(key="card-hyd-params"):
+            card_header("Parameters", "Feedstock, composition and operating conditions")
 
-# Customizing the Enzymatic Hydrolysis Results column (col6)
-with col6:
-    st.header("🎯Results")
-    st.write(f"Here you can see the results obtained for the Enzymatic Hydrolysis stage of {biomassa_hydrolysis}. Change the chart layout to visualize more relationships between the variables.")
-    
-    # Check if model is available for selected biomass
-    model_available = biomassa_hydrolysis == 'Sugarcane Straw'
-    
-    if st.button("Simulate Hydrolysis Profile", key="run_hydrolysis_profile", use_container_width=True, disabled=not model_available):
-        if reaction_time <= 0:
-            st.warning("Please set a reaction time greater than zero to generate the profile.")
-        else:
-            try:
-                profile_df = simulate_enzymatic_hydrolysis(
-                    solid_loading=solid_loading,
-                    enzyme_loading=enzyme_loading,
-                    cellulose_percent=celulose1,
-                    hemicellulose_percent=hemicelulose1,
-                    lignin_percent=lignina1,
-                    reaction_time=reaction_time
-                )
+            group_label("Feedstock", first=True)
+            biomassa_hydrolysis = st.selectbox(
+                "Biomass", ['Sugarcane Straw', 'Sugarcane Bagasse'], key="hyd_biomass",
+                help="Note: Only Sugarcane Straw model is currently available",
+            )
+            enzyme = st.selectbox("Enzyme", ['Cellic CTEC-2 (Novozymes)'], key="hyd_enzyme")
 
-                glucose_final = profile_df["Glucose"].iloc[-1]
-                xylose_final = profile_df["Xylose"].iloc[-1]
-                cellobiose_final = profile_df["Cellobiose"].iloc[-1]
-                
-                # Calcular rendimento de glicose
-                # Rendimento teórico: 1.111 g glicose por g de celulose (conversão estequiométrica)
-                cellulose_initial = solid_loading * (celulose1 / 100.0)
-                glucose_theoretical = cellulose_initial * 1.111
-                glucose_yield_percent = (glucose_final / glucose_theoretical) * 100 if glucose_theoretical > 0 else 0
-                
-                # Exibir métricas em três colunas
-                col_g, col_x, col_c = st.columns(3)
-                with col_g:
-                    st.metric("Glucose Produced", f"{glucose_final:.2f} g/L")
-                    st.metric("Xylose Produced", f"{xylose_final:.2f} g/L")
-                    
-                with col_x:
-                    st.metric("Theoretical Glucose", f"{glucose_theoretical:.2f} g/L", help="Maximum theoretical glucose from complete cellulose hydrolysis")
-                    st.metric("Cellobiose Produced", f"{cellobiose_final:.2f} g/L")
-                with col_c:
-                    st.metric("Glucose Yield", f"{glucose_yield_percent:.1f}%", help="Percentage of theoretical maximum glucose production")
+            group_label("Composition (% w/w)")
+            celulose1 = st.number_input(
+                "Cellulose (%)", min_value=45.0, max_value=65.0, value=55.0, format="%.2f", key="hyd_cellulose",
+                help="Model range: 45–65%",
+            )
+            hemicelulose1 = st.number_input(
+                "Hemicellulose (%)", min_value=5.0, max_value=15.0, value=8.0, format="%.2f", key="hyd_hemicellulose",
+                help="Model range: 5–15%",
+            )
+            lignina1 = st.number_input("Lignin (%)", min_value=0.0, max_value=100.0, value=25.0, format="%.2f", key="hyd_lignin")
+            composition_check(celulose1 + hemicelulose1 + lignina1)
 
-                fig = make_subplots(specs=[[{"secondary_y": True}]])
+            group_label("Operating conditions")
+            solid_loading = st.slider(
+                "Solids loading (g/L)", min_value=50.0, max_value=250.0, value=175.0, step=1.0, format="%.0f",
+                key="hyd_solids",
+            )
+            enzyme_loading = st.slider(
+                "Enzyme loading (g/L)", min_value=0.05, max_value=1.2, value=0.5, step=0.05, format="%.2f",
+                key="hyd_enzyme_loading",
+            )
+            reaction_time = st.slider(
+                "Reaction time (h)", min_value=1.0, max_value=96.0, value=60.0, step=0.5, format="%.1f",
+                key="hyd_time", help="The profile is always simulated up to 96 h; results are read at this time.",
+            )
 
-                fig.add_trace(
-                    go.Scatter(
-                        x=profile_df["Time (h)"],
-                        y=profile_df["Glucose"],
-                        mode="lines",
-                        line=dict(color="#1f77b4", width=3),
-                        name="Glucose"
-                    ),
-                    secondary_y=False
-                )
+    with col_results:
+        with st.container(key="card-hyd-results"):
+            card_header(
+                "Results",
+                f"{biomassa_hydrolysis} · {enzyme} · {solid_loading:.0f} g/L solids · {enzyme_loading:.2f} g/L enzyme · t = {reaction_time:.1f} h",
+            )
 
-                fig.add_trace(
-                    go.Scatter(
-                        x=profile_df["Time (h)"],
-                        y=profile_df["Xylose"],
-                        mode="lines",
-                        line=dict(color="#2ca02c", width=3),
-                        name="Xylose"
-                    ),
-                    secondary_y=True
-                )
+            if biomassa_hydrolysis != 'Sugarcane Straw':
+                empty_state("Model under development", "The Sugarcane Bagasse model for Enzymatic Hydrolysis is not available yet.")
+            else:
+                try:
+                    profile_df = simulate_enzymatic_hydrolysis(
+                        solid_loading=solid_loading,
+                        enzyme_loading=enzyme_loading,
+                        cellulose_percent=celulose1,
+                        hemicellulose_percent=hemicelulose1,
+                        lignin_percent=lignina1,
+                        reaction_time=reaction_time,
+                    )
+                except Exception as exc:
+                    st.error(f"Error while running hydrolysis simulation: {exc}", icon=":material/error:")
+                else:
+                    # Valores no tempo de reação escolhido
+                    time_h = profile_df["Time (h)"]
+                    glucose_at_time = float(np.interp(reaction_time, time_h, profile_df["Glucose"]))
+                    xylose_at_time = float(np.interp(reaction_time, time_h, profile_df["Xylose"]))
+                    cellobiose_at_time = float(np.interp(reaction_time, time_h, profile_df["Cellobiose"]))
 
-                fig.add_trace(
-                    go.Scatter(
-                        x=profile_df["Time (h)"],
-                        y=profile_df["Cellobiose"],
-                        mode="lines",
-                        line=dict(color="#ff7f0e", width=3),
-                        name="Cellobiose"
-                    ),
-                    secondary_y=True
-                )
+                    # Rendimento teórico: 1.111 g glicose por g de celulose (conversão estequiométrica)
+                    cellulose_initial = solid_loading * (celulose1 / 100.0)
+                    glucose_theoretical = cellulose_initial * 1.111
+                    glucose_yield_percent = (glucose_at_time / glucose_theoretical) * 100 if glucose_theoretical > 0 else 0
 
-                # Adicionar linha vertical no tempo final selecionado
-                fig.add_vline(
-                    x=reaction_time,
-                    line_dash="dash",
-                    line_color="red",
-                    line_width=2,
-                    annotation_text=f"Final Time: {reaction_time:.1f}h",
-                    annotation_position="top"
-                )
+                    with st.container(horizontal=True, gap="small", key="metrics-hyd"):
+                        st.metric("Glucose", f"{glucose_at_time:.2f} g/L")
+                        st.metric("Glucose yield", f"{glucose_yield_percent:.1f}%",
+                                  help=f"Percentage of the theoretical maximum glucose ({glucose_theoretical:.2f} g/L, complete cellulose hydrolysis)")
+                        st.metric("Xylose", f"{xylose_at_time:.2f} g/L")
+                        st.metric("Cellobiose", f"{cellobiose_at_time:.2f} g/L")
 
-                fig.update_layout(
-                    title={
-                        'text': "Enzymatic Hydrolysis Concentration Profiles",
-                        'x': 0.5,
-                        'xanchor': 'center'
-                    },
-                    hovermode="x unified"
-                )
-                fig.update_xaxes(title_text="Time (h)")
-                fig.update_yaxes(title_text="Glucose (g/L)", secondary_y=False)
-                fig.update_yaxes(title_text="Xylose / Cellobiose (g/L)", secondary_y=True, range=[0, 20])
+                    # Glicose tem escala muito maior que xilose e celobiose: dois painéis com o mesmo eixo de tempo
+                    fig = make_subplots(rows=2, cols=1, shared_xaxes=True, vertical_spacing=0.08, row_heights=[0.55, 0.45])
+                    add_series(fig, time_h, profile_df["Glucose"], "Glucose", "g/L", row=1, col=1)
+                    add_series(fig, time_h, profile_df["Xylose"], "Xylose", "g/L", row=2, col=1)
+                    add_series(fig, time_h, profile_df["Cellobiose"], "Cellobiose", "g/L", row=2, col=1)
+                    add_point(fig, reaction_time, glucose_at_time, "Glucose", row=1, col=1)
+                    add_point(fig, reaction_time, xylose_at_time, "Xylose", row=2, col=1)
+                    add_point(fig, reaction_time, cellobiose_at_time, "Cellobiose", row=2, col=1)
+                    add_time_marker(fig, reaction_time, f"t = {reaction_time:.1f} h", row=1, col=1)
+                    add_time_marker(fig, reaction_time, row=2, col=1)
+                    style_figure(fig, height=520)
+                    fig.update_xaxes(title_text="Time (h)", row=2, col=1)
+                    fig.update_yaxes(title_text="Glucose (g/L)", row=1, col=1)
+                    fig.update_yaxes(title_text="Xylose, cellobiose (g/L)", row=2, col=1)
+                    st.plotly_chart(fig, width="stretch", theme=None, config=PLOTLY_CONFIG)
 
-                st.plotly_chart(fig, use_container_width=True)
-                
-                with st.expander("📊 View Data Table"):
-                    st.dataframe(profile_df.round(3))
-            except Exception as exc:
-                st.error(f"Error while running hydrolysis simulation: {exc}")
+                    data_table(profile_df, "enzymatic_hydrolysis_profile.csv")
+
+st.html("""
+<footer class="footer">
+  <span>Ethanol AI · Scientific initiation research at UFSCar in collaboration with DTU, funded by FAPESP.</span>
+  <a href="https://github.com/AugustoCoding/Ethanol-AI" target="_blank">Source code on GitHub ↗</a>
+</footer>
+""")

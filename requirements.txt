@@ -1,7 +1,6 @@
-streamlit
-numpy
-pandas
-scikit-learn
-plotly
-scipy
-tensorflow
+streamlit==1.64.0
+numpy==2.5.3
+pandas==3.0.6
+scikit-learn==1.9.1
+plotly==7.1.0
+tensorflow==2.21.0

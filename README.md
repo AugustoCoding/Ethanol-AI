@@ -14,7 +14,8 @@ Instructions for the application will be available here.
 
 ```
 ├── streamlit_app.py      # App entrypoint (deployed on Streamlit Community Cloud)
-├── requirements.txt      # App dependencies
+├── requirements.txt      # App dependencies (pinned versions, Python 3.12)
+├── assets/style.css      # App styling (theme colors and fonts are in .streamlit/config.toml)
 ├── models/               # Trained ANNs loaded by the app
 ├── data/                 # Synthetic LHS datasets (used by the app to fit the scalers)
 ├── docs/references/      # Reference articles
