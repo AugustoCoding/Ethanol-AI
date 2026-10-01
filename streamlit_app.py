@@ -13,6 +13,27 @@ MODELS_DIR = os.path.join(BASE_DIR, "models")
 DATA_DIR = os.path.join(BASE_DIR, "data")
 ASSETS_DIR = os.path.join(BASE_DIR, "assets")
 
+# Faixas da amostragem LHS usadas no treino das ANNs. Os sliders do app ficam restritos a elas.
+# Fonte: research/01_pretreatment/data_generation/LHS_pre.ipynb e
+#        research/02_enzymatic_hydrolysis/data_generation/LHS.ipynb
+# Nos dois conjuntos a lignina é calculada por diferença (100% − celulose − hemicelulose).
+PRETREATMENT_RANGES = {
+    "temperature": (180.0, 210.0),  # °C
+    "solids": (50.0, 150.0),        # g/L
+    "cellulose": (30.0, 50.0),      # %
+    "hemicellulose": (15.0, 30.0),  # %
+    "lignin": (20.0, 40.0),         # %
+    "time": (0.0, 40.0),            # min
+}
+HYDROLYSIS_RANGES = {
+    "solids": (50.0, 250.0),        # g/L
+    "enzyme": (0.05, 1.2),          # g/L
+    "cellulose": (45.0, 65.0),      # %
+    "hemicellulose": (5.0, 15.0),   # %
+    "lignin": (20.0, 30.0),         # %
+    "time": (0.0, 96.0),            # h
+}
+
 st.set_page_config(page_title="Ethanol AI", page_icon="⚗️", layout="wide")
 
 # ============================================================================
@@ -175,8 +196,8 @@ def simulate_pretreatment_ann(
     hemicellulose_frac = hemicellulose_percent / 100.0
     lignin_frac = lignin_percent / 100.0
     
-    # Gerar array de tempos de 0 até 60 min (sempre completo)
-    time_array = np.linspace(0, 60.0, 61)
+    # Gerar array de tempos de 0 até 40 min (tempo máximo dos dados de treino)
+    time_array = np.linspace(0, PRETREATMENT_RANGES["time"][1], int(PRETREATMENT_RANGES["time"][1]) + 1)
     
     # Preparar features de entrada para cada ponto de tempo
     # Formato: [Temperature, Cellulose Fraction, Hemicellulose Fraction, Lignin Fraction, Solids Loading, Time]
@@ -380,32 +401,27 @@ def empty_state(title: str, text: str) -> None:
     st.html(f'<div class="empty-state"><strong>{title}</strong>{text}</div>')
 
 
-def composition_check(total: float) -> None:
-    if total > 100.0:
-        st.warning(f"Components add up to {total:.1f}%. The sum should not exceed 100%.", icon=":material/warning:")
-    else:
-        st.caption(f"Sum of components: {total:.1f}%")
+def cellulose_bounds(ranges: dict) -> tuple[float, float]:
+    """Faixa de celulose que permite lignina (por diferença) dentro da faixa de treino."""
+    lo = max(ranges["cellulose"][0], 100.0 - ranges["lignin"][1] - ranges["hemicellulose"][1])
+    hi = min(ranges["cellulose"][1], 100.0 - ranges["lignin"][0] - ranges["hemicellulose"][0])
+    return lo, hi
 
 
-def training_range_notice(scaler, inputs: list[tuple]) -> None:
-    """
-    Avisa quando alguma entrada está fora da faixa usada no treino da ANN (extrapolação).
-    A faixa vem do próprio scaler (data_min_/data_max_), ajustado com os dados de treino.
-    inputs: (rótulo, valor exibido, índice da feature, fator de escala, casas decimais, unidade)
-    """
-    if scaler is None:
-        return
-    outside = []
-    for label, value, idx, scale, decimals, unit in inputs:
-        lo = round(scaler.data_min_[idx] * scale, decimals)
-        hi = round(scaler.data_max_[idx] * scale, decimals)
-        if value < lo or value > hi:
-            outside.append(f"{label} ({lo:.{decimals}f}–{hi:.{decimals}f}{unit})")
-    if outside:
+def lignin_by_difference(cellulose: float, hemicellulose: float, ranges: dict) -> float:
+    """Mostra a lignina calculada por diferença e avisa se ela sai da faixa de treino."""
+    lignin = 100.0 - cellulose - hemicellulose
+    lo, hi = ranges["lignin"]
+    st.html(
+        f'<div class="computed-field"><span>Lignin (by difference)</span><strong>{lignin:.1f}%</strong></div>'
+    )
+    if not (lo <= lignin <= hi):
         st.info(
-            "Outside the model's training range, so results are extrapolated: " + ", ".join(outside) + ".",
+            f"Lignin is outside the training range ({lo:.0f}–{hi:.0f}%). Adjust cellulose or "
+            "hemicellulose, otherwise results are extrapolated.",
             icon=":material/info:",
         )
+    return lignin
 
 
 def data_table(df: pd.DataFrame, file_name: str) -> None:
@@ -484,22 +500,20 @@ with tab_pre:
             )
 
             group_label("Composition (% w/w)")
-            celulose = st.slider("Cellulose (%)", min_value=0.0, max_value=100.0, value=40.0, step=0.5, format="%.1f", key="pre_cellulose")
-            hemicelulose = st.slider("Hemicellulose (%)", min_value=0.0, max_value=100.0, value=30.0, step=0.5, format="%.1f", key="pre_hemicellulose")
-            lignina = st.slider("Lignin (%)", min_value=0.0, max_value=100.0, value=20.0, step=0.5, format="%.1f", key="pre_lignin")
-            composition_check(celulose + hemicelulose + lignina)
+            R = PRETREATMENT_RANGES
+            celulose = st.slider("Cellulose (%)", *cellulose_bounds(R), value=40.0, step=0.5, format="%.1f", key="pre_cellulose")
+            hemicelulose = st.slider("Hemicellulose (%)", *R["hemicellulose"], value=30.0, step=0.5, format="%.1f", key="pre_hemicellulose")
+            lignina = lignin_by_difference(celulose, hemicelulose, R)
 
             group_label("Operating conditions")
             solid_loading_hydro = st.slider(
-                "Solids loading (g/L)", min_value=1.0, max_value=500.0, value=100.0, step=1.0, format="%.0f", key="pre_solids",
+                "Solids loading (g/L)", *R["solids"], value=100.0, step=1.0, format="%.0f", key="pre_solids",
             )
             temperature_hydro = st.slider(
-                "Temperature (°C)", min_value=180.0, max_value=210.0, value=195.0, step=0.5, format="%.1f",
-                key="pre_temperature", help="Temperature range: 180-210°C",
+                "Temperature (°C)", *R["temperature"], value=195.0, step=0.5, format="%.1f", key="pre_temperature",
             )
             time_hydro = st.slider(
-                "Time (min)", min_value=1.0, max_value=60.0, value=15.0, step=0.5, format="%.1f",
-                key="pre_time", help="Maximum simulation time: 60 minutes",
+                "Time (min)", 1.0, R["time"][1], value=15.0, step=0.5, format="%.1f", key="pre_time",
             )
 
     with col_results:
@@ -515,15 +529,6 @@ with tab_pre:
                 else:
                     empty_state("Model under development", f"The Organosolv pretreatment model for {biomassa} is not available yet.")
             else:
-                # Ordem das features: temperatura, celulose, hemicelulose, lignina, sólidos, tempo
-                training_range_notice(scaler_X_pretreat, [
-                    ("Temperature", temperature_hydro, 0, 1, 0, " °C"),
-                    ("Cellulose", celulose, 1, 100, 0, "%"),
-                    ("Hemicellulose", hemicelulose, 2, 100, 0, "%"),
-                    ("Lignin", lignina, 3, 100, 0, "%"),
-                    ("Solids loading", solid_loading_hydro, 4, 1, 0, " g/L"),
-                    ("Time", time_hydro, 5, 1, 0, " min"),
-                ])
                 try:
                     results = simulate_pretreatment_ann(
                         temperature=temperature_hydro,
@@ -593,22 +598,20 @@ with tab_hyd:
             enzyme = st.selectbox("Enzyme", ['Cellic CTEC-2 (Novozymes)'], key="hyd_enzyme")
 
             group_label("Composition (% w/w)")
-            celulose1 = st.slider("Cellulose (%)", min_value=45.0, max_value=65.0, value=55.0, step=0.1, format="%.1f", key="hyd_cellulose")
-            hemicelulose1 = st.slider("Hemicellulose (%)", min_value=5.0, max_value=15.0, value=8.0, step=0.1, format="%.1f", key="hyd_hemicellulose")
-            lignina1 = st.slider("Lignin (%)", min_value=0.0, max_value=100.0, value=25.0, step=0.5, format="%.1f", key="hyd_lignin")
-            composition_check(celulose1 + hemicelulose1 + lignina1)
+            R = HYDROLYSIS_RANGES
+            celulose1 = st.slider("Cellulose (%)", *cellulose_bounds(R), value=62.0, step=0.1, format="%.1f", key="hyd_cellulose")
+            hemicelulose1 = st.slider("Hemicellulose (%)", *R["hemicellulose"], value=12.0, step=0.1, format="%.1f", key="hyd_hemicellulose")
+            lignina1 = lignin_by_difference(celulose1, hemicelulose1, R)
 
             group_label("Operating conditions")
             solid_loading = st.slider(
-                "Solids loading (g/L)", min_value=50.0, max_value=250.0, value=175.0, step=1.0, format="%.0f",
-                key="hyd_solids",
+                "Solids loading (g/L)", *R["solids"], value=175.0, step=1.0, format="%.0f", key="hyd_solids",
             )
             enzyme_loading = st.slider(
-                "Enzyme loading (g/L)", min_value=0.05, max_value=1.2, value=0.5, step=0.05, format="%.2f",
-                key="hyd_enzyme_loading",
+                "Enzyme loading (g/L)", *R["enzyme"], value=0.5, step=0.05, format="%.2f", key="hyd_enzyme_loading",
             )
             reaction_time = st.slider(
-                "Reaction time (h)", min_value=1.0, max_value=96.0, value=60.0, step=0.5, format="%.1f",
+                "Reaction time (h)", 1.0, R["time"][1], value=60.0, step=0.5, format="%.1f",
                 key="hyd_time", help="The profile is always simulated up to 96 h; results are read at this time.",
             )
 
@@ -622,15 +625,6 @@ with tab_hyd:
             if biomassa_hydrolysis != 'Sugarcane Straw':
                 empty_state("Model under development", "The Sugarcane Bagasse model for Enzymatic Hydrolysis is not available yet.")
             else:
-                # Ordem das features: celulose, hemicelulose, lignina, sólidos, enzima, tempo
-                training_range_notice(scaler_X, [
-                    ("Cellulose", celulose1, 0, 100, 0, "%"),
-                    ("Hemicellulose", hemicelulose1, 1, 100, 0, "%"),
-                    ("Lignin", lignina1, 2, 100, 0, "%"),
-                    ("Solids loading", solid_loading, 3, 1, 0, " g/L"),
-                    ("Enzyme loading", enzyme_loading, 4, 1, 2, " g/L"),
-                    ("Reaction time", reaction_time, 5, 1, 0, " h"),
-                ])
                 try:
                     profile_df = simulate_enzymatic_hydrolysis(
                         solid_loading=solid_loading,

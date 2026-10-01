@@ -325,6 +325,24 @@
     margin-top: 2px;
 }
 
+/* Valor calculado (lignina por diferença) */
+.computed-field {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 9px 12px;
+    border-radius: 10px;
+    border: 1px dashed var(--border);
+    background: rgba(243, 247, 245, 0.7);
+    font-size: 0.875rem;
+    color: var(--ink-2);
+}
+
+.computed-field strong {
+    color: var(--ink);
+    font-weight: 700;
+}
+
 /* ---------- Métricas ---------- */
 /* 2 x 2 por padrão; 4 em linha nas telas largas (gap de 12px entre os cartões) */
 [class*="st-key-metrics-"] {
