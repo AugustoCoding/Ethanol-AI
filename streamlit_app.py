@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import streamlit as st
 import pandas as pd
@@ -5,7 +6,11 @@ from plotly import graph_objs as go
 from plotly.subplots import make_subplots
 import tensorflow as tf
 from sklearn.preprocessing import MinMaxScaler
-from Hydrothermal_Pretreatment import simulate_hydrothermal_degradation
+
+# Caminhos dos artefatos usados pelo app (relativos a este arquivo)
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+MODELS_DIR = os.path.join(BASE_DIR, "models")
+DATA_DIR = os.path.join(BASE_DIR, "data")
 
 # Configurando o layout para modo "wide" - DEVE SER O PRIMEIRO COMANDO STREAMLIT
 st.set_page_config(layout="wide")
@@ -52,11 +57,10 @@ def load_ann_model_and_scalers():
     Carrega modelos ANN (hidrólise e pré-tratamento) e configura scalers com dados de treinamento.
     Usa cache para carregar apenas uma vez.
     """
-    import os
     try:
         # ===== HIDRÓLISE =====
-        model_path = "champion_model.h5" if os.path.exists("champion_model.h5") else os.path.join("BEPE FAPESP", "Genetic ANNs", "Straw", "Hydrolysis", "champion_ann_strategy1_32_32_16.h5")
-        data_path = "training_data.csv" if os.path.exists("training_data.csv") else os.path.join("BEPE FAPESP", "Enzymatic Hydrolysis", "Data Generation", "synthetic_hydrolysis_data_LHS.csv")
+        model_path = os.path.join(MODELS_DIR, "champion_ann_strategy1_32_32_16.h5")
+        data_path = os.path.join(DATA_DIR, "synthetic_hydrolysis_data_LHS.csv")
         
         if not os.path.exists(model_path):
             raise FileNotFoundError(f"Hydrolysis model not found at '{model_path}'.")
@@ -83,8 +87,8 @@ def load_ann_model_and_scalers():
         scaler_y.fit(y_data)
         
         # ===== PRÉ-TRATAMENTO =====
-        pretreat_model_path = os.path.join("BEPE FAPESP", "Genetic ANNs", "Straw", "Pretreatment", "champion_ann_pretreatment_strategy1_32_64_16.h5")
-        pretreat_data_path = os.path.join("BEPE FAPESP", "Pretreatment", "Data Generation", "synthetic_pretreatment_data_LHS.csv")
+        pretreat_model_path = os.path.join(MODELS_DIR, "champion_ann_pretreatment_strategy1_32_64_16.h5")
+        pretreat_data_path = os.path.join(DATA_DIR, "synthetic_pretreatment_data_LHS.csv")
         
         if not os.path.exists(pretreat_model_path):
             raise FileNotFoundError(f"Pretreatment model not found at '{pretreat_model_path}'.")

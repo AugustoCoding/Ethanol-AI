@@ -9,3 +9,29 @@ Ethanol AI is a tool created within a research program called scientific initiat
 ## App Instructions
 
 Instructions for the application will be available here.
+
+## Repository Structure
+
+```
+├── streamlit_app.py      # App entrypoint (deployed on Streamlit Community Cloud)
+├── requirements.txt      # App dependencies
+├── models/               # Trained ANNs loaded by the app
+├── data/                 # Synthetic LHS datasets (used by the app to fit the scalers)
+├── docs/references/      # Reference articles
+└── research/             # Research notebooks (not used by the app)
+    ├── 01_pretreatment/          # Hydrothermal kinetic model and LHS data generation
+    ├── 02_enzymatic_hydrolysis/  # Hydrolysis models, experimental data and LHS
+    ├── 03_fermentation/          # Fermentation model (Python + MATLAB reference)
+    ├── 04_genetic_ann_search/    # Genetic algorithm search for ANN architectures
+    ├── 05_back_optimization/     # Inverse optimization with the champion ANN
+    └── legacy/                   # Early models (SVR, RF, first ANNs)
+```
+
+Notebooks under `research/` use paths relative to their own folder, so run them with the notebook's folder as the working directory.
+
+To run the app locally:
+
+```bash
+pip install -r requirements.txt
+streamlit run streamlit_app.py
+```
