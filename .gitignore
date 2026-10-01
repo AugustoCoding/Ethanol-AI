@@ -14,3 +14,9 @@ venv/
 .DS_Store
 Thumbs.db
 desktop.ini
+
+# Dados sintéticos completos (regeneráveis com pipeline/03_generate_synthetic.py)
+data/synthetic/*.npz
+
+# Testes
+.pytest_cache/
