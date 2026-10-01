@@ -1,0 +1,7 @@
+# Dependências do pipeline de pesquisa (calibração, geração de dados, treino e testes).
+# O app só precisa de requirements.txt.
+-r requirements.txt
+tensorflow==2.21.0
+matplotlib==3.11.2
+openpyxl==3.1.5
+pytest==9.1.1
