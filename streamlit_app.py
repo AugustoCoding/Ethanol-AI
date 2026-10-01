@@ -387,6 +387,27 @@ def composition_check(total: float) -> None:
         st.caption(f"Sum of components: {total:.1f}%")
 
 
+def training_range_notice(scaler, inputs: list[tuple]) -> None:
+    """
+    Avisa quando alguma entrada está fora da faixa usada no treino da ANN (extrapolação).
+    A faixa vem do próprio scaler (data_min_/data_max_), ajustado com os dados de treino.
+    inputs: (rótulo, valor exibido, índice da feature, fator de escala, casas decimais, unidade)
+    """
+    if scaler is None:
+        return
+    outside = []
+    for label, value, idx, scale, decimals, unit in inputs:
+        lo = round(scaler.data_min_[idx] * scale, decimals)
+        hi = round(scaler.data_max_[idx] * scale, decimals)
+        if value < lo or value > hi:
+            outside.append(f"{label} ({lo:.{decimals}f}–{hi:.{decimals}f}{unit})")
+    if outside:
+        st.info(
+            "Outside the model's training range, so results are extrapolated: " + ", ".join(outside) + ".",
+            icon=":material/info:",
+        )
+
+
 def data_table(df: pd.DataFrame, file_name: str) -> None:
     with st.expander("Data table", icon=":material/table_chart:"):
         st.dataframe(df.round(3), hide_index=True)
@@ -463,14 +484,14 @@ with tab_pre:
             )
 
             group_label("Composition (% w/w)")
-            celulose = st.number_input("Cellulose (%)", min_value=0.0, max_value=100.0, value=40.0, format="%.2f", key="pre_cellulose")
-            hemicelulose = st.number_input("Hemicellulose (%)", min_value=0.0, max_value=100.0, value=30.0, format="%.2f", key="pre_hemicellulose")
-            lignina = st.number_input("Lignin (%)", min_value=0.0, max_value=100.0, value=20.0, format="%.2f", key="pre_lignin")
+            celulose = st.slider("Cellulose (%)", min_value=0.0, max_value=100.0, value=40.0, step=0.5, format="%.1f", key="pre_cellulose")
+            hemicelulose = st.slider("Hemicellulose (%)", min_value=0.0, max_value=100.0, value=30.0, step=0.5, format="%.1f", key="pre_hemicellulose")
+            lignina = st.slider("Lignin (%)", min_value=0.0, max_value=100.0, value=20.0, step=0.5, format="%.1f", key="pre_lignin")
             composition_check(celulose + hemicelulose + lignina)
 
             group_label("Operating conditions")
-            solid_loading_hydro = st.number_input(
-                "Solids loading (g/L)", min_value=1.0, max_value=500.0, value=100.0, format="%.2f", key="pre_solids",
+            solid_loading_hydro = st.slider(
+                "Solids loading (g/L)", min_value=1.0, max_value=500.0, value=100.0, step=1.0, format="%.0f", key="pre_solids",
             )
             temperature_hydro = st.slider(
                 "Temperature (°C)", min_value=180.0, max_value=210.0, value=195.0, step=0.5, format="%.1f",
@@ -494,6 +515,15 @@ with tab_pre:
                 else:
                     empty_state("Model under development", f"The Organosolv pretreatment model for {biomassa} is not available yet.")
             else:
+                # Ordem das features: temperatura, celulose, hemicelulose, lignina, sólidos, tempo
+                training_range_notice(scaler_X_pretreat, [
+                    ("Temperature", temperature_hydro, 0, 1, 0, " °C"),
+                    ("Cellulose", celulose, 1, 100, 0, "%"),
+                    ("Hemicellulose", hemicelulose, 2, 100, 0, "%"),
+                    ("Lignin", lignina, 3, 100, 0, "%"),
+                    ("Solids loading", solid_loading_hydro, 4, 1, 0, " g/L"),
+                    ("Time", time_hydro, 5, 1, 0, " min"),
+                ])
                 try:
                     results = simulate_pretreatment_ann(
                         temperature=temperature_hydro,
@@ -563,15 +593,9 @@ with tab_hyd:
             enzyme = st.selectbox("Enzyme", ['Cellic CTEC-2 (Novozymes)'], key="hyd_enzyme")
 
             group_label("Composition (% w/w)")
-            celulose1 = st.number_input(
-                "Cellulose (%)", min_value=45.0, max_value=65.0, value=55.0, format="%.2f", key="hyd_cellulose",
-                help="Model range: 45–65%",
-            )
-            hemicelulose1 = st.number_input(
-                "Hemicellulose (%)", min_value=5.0, max_value=15.0, value=8.0, format="%.2f", key="hyd_hemicellulose",
-                help="Model range: 5–15%",
-            )
-            lignina1 = st.number_input("Lignin (%)", min_value=0.0, max_value=100.0, value=25.0, format="%.2f", key="hyd_lignin")
+            celulose1 = st.slider("Cellulose (%)", min_value=45.0, max_value=65.0, value=55.0, step=0.1, format="%.1f", key="hyd_cellulose")
+            hemicelulose1 = st.slider("Hemicellulose (%)", min_value=5.0, max_value=15.0, value=8.0, step=0.1, format="%.1f", key="hyd_hemicellulose")
+            lignina1 = st.slider("Lignin (%)", min_value=0.0, max_value=100.0, value=25.0, step=0.5, format="%.1f", key="hyd_lignin")
             composition_check(celulose1 + hemicelulose1 + lignina1)
 
             group_label("Operating conditions")
@@ -598,6 +622,15 @@ with tab_hyd:
             if biomassa_hydrolysis != 'Sugarcane Straw':
                 empty_state("Model under development", "The Sugarcane Bagasse model for Enzymatic Hydrolysis is not available yet.")
             else:
+                # Ordem das features: celulose, hemicelulose, lignina, sólidos, enzima, tempo
+                training_range_notice(scaler_X, [
+                    ("Cellulose", celulose1, 0, 100, 0, "%"),
+                    ("Hemicellulose", hemicelulose1, 1, 100, 0, "%"),
+                    ("Lignin", lignina1, 2, 100, 0, "%"),
+                    ("Solids loading", solid_loading, 3, 1, 0, " g/L"),
+                    ("Enzyme loading", enzyme_loading, 4, 1, 2, " g/L"),
+                    ("Reaction time", reaction_time, 5, 1, 0, " h"),
+                ])
                 try:
                     profile_df = simulate_enzymatic_hydrolysis(
                         solid_loading=solid_loading,
