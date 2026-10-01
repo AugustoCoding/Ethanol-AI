@@ -489,6 +489,20 @@
     color: var(--ink);
 }
 
+/* Texto abaixo do valor (faixa de incerteza, dose em FPU, conferência): quebra linha em vez de cortar */
+[data-testid="stMetricDelta"],
+[data-testid="stMetricDelta"] * {
+    white-space: normal !important;
+    text-overflow: clip !important;
+    overflow: visible !important;
+}
+
+[data-testid="stMetricDelta"] {
+    height: auto;
+    line-height: 1.3;
+    font-size: 0.78rem;
+}
+
 /* ---------- Telas pequenas ---------- */
 @media (max-width: 640px) {
     [class*="st-key-card-"] {
@@ -611,6 +625,11 @@
     gap: 8px;
     font-size: 0.85rem;
     color: var(--muted);
+}
+
+.footer-links {
+    display: inline-flex;
+    gap: 18px;
 }
 
 .footer a {

@@ -1,329 +1,73 @@
 import json
-import math
-import os
+
 import numpy as np
-import streamlit as st
 import pandas as pd
+import streamlit as st
 from plotly import graph_objs as go
 from plotly.subplots import make_subplots
-import tensorflow as tf
-from sklearn.preprocessing import MinMaxScaler
 
-# Caminhos dos artefatos usados pelo app (relativos a este arquivo)
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-MODELS_DIR = os.path.join(BASE_DIR, "models")
-DATA_DIR = os.path.join(BASE_DIR, "data")
-ASSETS_DIR = os.path.join(BASE_DIR, "assets")
-
-# Faixas da amostragem LHS usadas no treino das ANNs.
-# Fonte: research/01_pretreatment/data_generation/LHS_pre.ipynb e
-#        research/02_enzymatic_hydrolysis/data_generation/LHS.ipynb
-# Nos dois conjuntos a lignina é calculada por diferença (100% − celulose − hemicelulose).
-PRETREATMENT_RANGES = {
-    "temperature": (180.0, 210.0),  # °C
-    "solids": (50.0, 150.0),        # g/L
-    "cellulose": (30.0, 50.0),      # %
-    "hemicellulose": (15.0, 30.0),  # %
-    "lignin": (20.0, 40.0),         # %
-    "time": (0.0, 40.0),            # min
-}
-HYDROLYSIS_RANGES = {
-    "solids": (50.0, 250.0),        # g/L
-    "enzyme": (0.05, 1.2),          # g/L
-    "cellulose": (45.0, 65.0),      # %
-    "hemicellulose": (5.0, 15.0),   # %
-    "lignin": (20.0, 30.0),         # %
-    "time": (0.0, 96.0),            # h
-}
-
-# Os sliders vão além da faixa de treino (30% da largura da faixa para cada lado);
-# essas pontas aparecem marcadas como zona de extrapolação.
-EXTRAPOLATION_MARGIN = 0.30
-
-
-def extended_limits(train: tuple[float, float], step: float, floor: float | None = None) -> tuple[float, float]:
-    """Limites do slider: faixa de treino ampliada pela margem de extrapolação, alinhada ao passo."""
-    lo, hi = train
-    pad = (hi - lo) * EXTRAPOLATION_MARGIN
-    lo_ext = math.floor((lo - pad) / step + 1e-9) * step
-    hi_ext = math.ceil((hi + pad) / step - 1e-9) * step
-    if floor is not None:
-        lo_ext = max(lo_ext, floor)
-    return round(lo_ext, 6), round(hi_ext, 6)
-
-
-# Horizonte das simulações = maior tempo selecionável (inclui a margem extrapolada)
-PRE_TIME_MAX = extended_limits(PRETREATMENT_RANGES["time"], 0.5, floor=1.0)[1]
-HYD_TIME_MAX = extended_limits(HYDROLYSIS_RANGES["time"], 0.5, floor=1.0)[1]
+from ethanol_ai.paths import ROOT, MODELS, EXPERIMENTAL
+from ethanol_ai import pretreatment as pre_kinetics, hydrolysis as hyd_kinetics
+from ethanol_ai.surrogate import PretreatmentSurrogate, HydrolysisSurrogate
+from ethanol_ai.domain import PRETREATMENT, HYDROLYSIS, Variable, fpu_per_g_cellulose
+from ethanol_ai.optimization import enzyme_frontier, pretreatment_map
+from ethanol_ai.constants import GLUCAN_TO_GLUCOSE, XYLAN_TO_XYLOSE
 
 st.set_page_config(page_title="Ethanol AI", page_icon="⚗️", layout="wide")
 
+BAND = (5, 95)  # percentis da faixa de incerteza (ensemble das redes)
+PRE_T_MAX = PRETREATMENT["time"].slider_range()[1]
+HYD_T_MAX = HYDROLYSIS["time"].slider_range()[1]
+
+
 # ============================================================================
-# CARREGAMENTO DO MODELO ANN E SCALERS
+# MODELOS
 # ============================================================================
+# As previsões vêm das redes (inferência em NumPy, ver ethanol_ai/surrogate.py).
+# Os modelos cinéticos calibrados só conferem as recomendações da aba de otimização.
 
-@st.cache_resource
-def load_ann_model_and_scalers():
-    """
-    Carrega modelos ANN (hidrólise e pré-tratamento) e configura scalers com dados de treinamento.
-    Usa cache para carregar apenas uma vez.
-    """
-    try:
-        # ===== HIDRÓLISE =====
-        model_path = os.path.join(MODELS_DIR, "champion_ann_strategy1_32_32_16.h5")
-        data_path = os.path.join(DATA_DIR, "synthetic_hydrolysis_data_LHS.csv")
-        
-        if not os.path.exists(model_path):
-            raise FileNotFoundError(f"Hydrolysis model not found at '{model_path}'.")
-        if not os.path.exists(data_path):
-            raise FileNotFoundError(f"Hydrolysis data not found at '{data_path}'.")
-         
-        # Carregar modelo de hidrólise
-        champion_model = tf.keras.models.load_model(model_path, compile=False)
-        champion_model.compile(optimizer='adam', loss='mse', metrics=['mae'])
-        
-        # Carregar dados de treinamento para ajustar scalers
-        df = pd.read_csv(data_path)
-        df.columns = df.columns.str.strip()
-        
-        INPUT_FEATURES = ['Cellulose', 'Hemicellulose', 'Lignin', 'Solids Loading [g/L]', 'Enzyme Loading [g/L]', 'Time [h]']
-        OUTPUT_FEATURES = ['Glucose Concentration [g/L]', 'Xylose Concentration [g/L]', 'Cellobiose Concentration [g/L]']
-        
-        X_data = df[INPUT_FEATURES].values
-        y_data = df[OUTPUT_FEATURES].values
-        
-        scaler_X = MinMaxScaler(feature_range=(0, 1))
-        scaler_y = MinMaxScaler(feature_range=(0, 1))
-        scaler_X.fit(X_data)
-        scaler_y.fit(y_data)
-        
-        # ===== PRÉ-TRATAMENTO =====
-        pretreat_model_path = os.path.join(MODELS_DIR, "champion_ann_pretreatment_strategy1_32_64_16.h5")
-        pretreat_data_path = os.path.join(DATA_DIR, "synthetic_pretreatment_data_LHS.csv")
-        
-        if not os.path.exists(pretreat_model_path):
-            raise FileNotFoundError(f"Pretreatment model not found at '{pretreat_model_path}'.")
-        if not os.path.exists(pretreat_data_path):
-            raise FileNotFoundError(f"Pretreatment data not found at '{pretreat_data_path}'.")
-        
-        # Carregar modelo de pré-tratamento
-        pretreat_model = tf.keras.models.load_model(pretreat_model_path, compile=False)
-        pretreat_model.compile(optimizer='adam', loss='mse', metrics=['mae'])
-        
-        # Carregar dados de treinamento para ajustar scalers
-        df_pretreat = pd.read_csv(pretreat_data_path)
-        df_pretreat.columns = df_pretreat.columns.str.strip()
-        
-        PRETREAT_INPUT_FEATURES = ['Temperature [°C]', 'Cellulose Fraction', 'Hemicellulose Fraction', 'Lignin Fraction', 'Solids Loading [g/L]', 'Time [min]']
-        PRETREAT_OUTPUT_FEATURES = ['Cellulose Remaining [g/L]', 'Hemicellulose Remaining [g/L]']
-        
-        X_pretreat_data = df_pretreat[PRETREAT_INPUT_FEATURES].values
-        y_pretreat_data = df_pretreat[PRETREAT_OUTPUT_FEATURES].values
-        
-        scaler_X_pretreat = MinMaxScaler(feature_range=(0, 1))
-        scaler_y_pretreat = MinMaxScaler(feature_range=(0, 1))
-        scaler_X_pretreat.fit(X_pretreat_data)
-        scaler_y_pretreat.fit(y_pretreat_data)
-        
-        return champion_model, scaler_X, scaler_y, pretreat_model, scaler_X_pretreat, scaler_y_pretreat, True, None
-        
-    except Exception as e:
-        return None, None, None, None, None, None, False, str(e)
-
-# Carregar modelos ao iniciar app
-champion_model, scaler_X, scaler_y, pretreat_model, scaler_X_pretreat, scaler_y_pretreat, model_loaded, load_error = load_ann_model_and_scalers()
-
-
-def apply_physical_constraints(predictions: np.ndarray, time_inputs: np.ndarray) -> np.ndarray:
-    """
-    Aplica constraints físicos às predições da ANN.
-    Regra: Se t=0h, então concentrações = [0, 0, 0]
-    """
-    constrained_predictions = predictions.copy()
-    
-    # Identificar amostras t=0h (tolerância para comparações float)
-    t0_mask = np.abs(time_inputs) < 1e-6
-    
-    # Aplicar constraint: t=0h → concentrações = [0, 0, 0]
-    if np.any(t0_mask):
-        constrained_predictions[t0_mask] = 0.0
-    
-    # Garantir valores não-negativos para todas as amostras
-    constrained_predictions = np.maximum(constrained_predictions, 0.0)
-    
-    return constrained_predictions
-
-
-def apply_physical_constraints_pretreatment(
-    predictions: np.ndarray,
-    time_inputs: np.ndarray,
-    cellulose_frac: float,
-    hemi_frac: float,
-    solids: float
-) -> np.ndarray:
-    """
-    Aplica constraints físicos às predições da ANN de pré-tratamento.
-    Regras: 
-    - Se t=0min, então [Cellulose_Remaining, Hemicellulose_Remaining] = [C0, H0]
-    - Concentrações não podem exceder valores iniciais (C0, H0)
-    """
-    constrained_predictions = predictions.copy()
-    
-    # Calcular concentrações iniciais
-    C0 = solids * cellulose_frac
-    H0 = solids * hemi_frac
-    
-    # Identificar amostras t=0min
-    t0_mask = np.abs(time_inputs) < 1e-6
-    
-    # Aplicar constraint: t=0min → [C0, H0]
-    if np.any(t0_mask):
-        constrained_predictions[t0_mask, 0] = C0
-        constrained_predictions[t0_mask, 1] = H0
-    
-    # Garantir que concentrações não excedem valores iniciais
-    constrained_predictions[:, 0] = np.minimum(constrained_predictions[:, 0], C0)
-    constrained_predictions[:, 1] = np.minimum(constrained_predictions[:, 1], H0)
-    
-    # Garantir valores não-negativos
-    constrained_predictions = np.maximum(constrained_predictions, 0.0)
-    
-    return constrained_predictions
-
-
-@st.cache_data(show_spinner=False)
-def simulate_pretreatment_ann(
-    temperature: float,
-    solid_loading: float,
-    cellulose_percent: float,
-    hemicellulose_percent: float,
-    lignin_percent: float,
-    time_final: float
-) -> dict:
-    """
-    Modelo de pré-tratamento hidrotérmico usando Rede Neural ANN.
-    Baseado em champion_ann_pretreatment_strategy1_32_64_16.h5
-    """
-    if time_final <= 0:
-        raise ValueError("Time must be greater than zero.")
-    
-    if solid_loading <= 0:
-        raise ValueError("Solids loading must be greater than zero.")
-    
-    if not model_loaded:
-        raise RuntimeError(f"ANN model could not be loaded: {load_error}")
-    
-    # Converter percentagens para frações (0-1)
-    cellulose_frac = cellulose_percent / 100.0
-    hemicellulose_frac = hemicellulose_percent / 100.0
-    lignin_frac = lignin_percent / 100.0
-    
-    # Gerar array de tempos de 0 até o maior tempo do slider (acima de 40 min é extrapolação)
-    time_array = np.linspace(0, PRE_TIME_MAX, int(PRE_TIME_MAX) + 1)
-    
-    # Preparar features de entrada para cada ponto de tempo
-    # Formato: [Temperature, Cellulose Fraction, Hemicellulose Fraction, Lignin Fraction, Solids Loading, Time]
-    X = np.array([
-        [temperature, cellulose_frac, hemicellulose_frac, lignin_frac, solid_loading, t]
-        for t in time_array
-    ])
-    
-    # Normalizar entradas
-    X_scaled = scaler_X_pretreat.transform(X)
-    
-    # Fazer predições com ANN
-    y_pred_scaled = pretreat_model.predict(X_scaled, verbose=0)
-    
-    # Desnormalizar predições
-    y_pred = scaler_y_pretreat.inverse_transform(y_pred_scaled)
-    
-    # Aplicar constraints físicos
-    y_pred_constrained = apply_physical_constraints_pretreatment(
-        y_pred, time_array, cellulose_frac, hemicellulose_frac, solid_loading
-    )
-    
-    # Calcular concentrações iniciais e degradação
-    C0 = solid_loading * cellulose_frac
-    H0 = solid_loading * hemicellulose_frac
-    
-    final_cellulose = y_pred_constrained[-1, 0]
-    final_hemicellulose = y_pred_constrained[-1, 1]
-    
-    cellulose_degraded_percent = ((C0 - final_cellulose) / C0 * 100) if C0 > 0 else 0
-    hemicellulose_degraded_percent = ((H0 - final_hemicellulose) / H0 * 100) if H0 > 0 else 0
-    
+@st.cache_resource(show_spinner=False)
+def load_models() -> dict:
     return {
-        'time': time_array,
-        'cellulose': y_pred_constrained[:, 0],
-        'hemicellulose': y_pred_constrained[:, 1],
-        'final_cellulose': final_cellulose,
-        'final_hemicellulose': final_hemicellulose,
-        'cellulose_degraded_percent': cellulose_degraded_percent,
-        'hemicellulose_degraded_percent': hemicellulose_degraded_percent,
-        'time_final': time_final
+        "pre": PretreatmentSurrogate.load(MODELS / "pretreatment_surrogate.npz"),
+        "hyd": HydrolysisSurrogate.load(MODELS / "hydrolysis_surrogate.npz"),
+        "pre_mech": pre_kinetics.load_kinetics(MODELS / "pretreatment_kinetics.json")[0],
+        "hyd_mech": hyd_kinetics.load_kinetics(MODELS / "hydrolysis_kinetics.json")[0],
     }
 
 
 @st.cache_data(show_spinner=False)
-def simulate_enzymatic_hydrolysis(
-    solid_loading: float,
-    enzyme_loading: float,
-    cellulose_percent: float,
-    hemicellulose_percent: float,
-    lignin_percent: float,
-    reaction_time: float
-) -> pd.DataFrame:
-    """
-    Modelo de hidrólise enzimática usando Rede Neural ANN.
-    Baseado em champion_ann_strategy1_32_32_16.h5
-    """
-    
-    if reaction_time <= 0:
-        raise ValueError("Reaction time must be greater than zero.")
-    
-    if solid_loading <= 0:
-        raise ValueError("Solids loading must be greater than zero.")
-    
-    if not model_loaded:
-        raise RuntimeError(f"ANN model could not be loaded: {load_error}")
-    
-    # Converter percentagens para frações (0-1)
-    cellulose_frac = cellulose_percent / 100.0
-    hemicellulose_frac = hemicellulose_percent / 100.0
-    lignin_frac = lignin_percent / 100.0
-    
-    # Gerar array de tempos de 0 até o maior tempo do slider (acima de 96 h é extrapolação)
-    t_final_simulation = HYD_TIME_MAX
-    time_array = np.linspace(0, t_final_simulation, int(t_final_simulation) + 1)
-    
-    # Preparar features de entrada para cada ponto de tempo
-    # Formato: [Cellulose, Hemicellulose, Lignin, Solids Loading, Enzyme Loading, Time]
-    X = np.array([
-        [cellulose_frac, hemicellulose_frac, lignin_frac, solid_loading, enzyme_loading, t]
-        for t in time_array
-    ])
-    
-    # Normalizar entradas
-    X_scaled = scaler_X.transform(X)
-    
-    # Fazer predições com ANN
-    y_pred_scaled = champion_model.predict(X_scaled, verbose=0)
-    
-    # Desnormalizar predições
-    y_pred = scaler_y.inverse_transform(y_pred_scaled)
-    
-    # Aplicar constraints físicos (t=0 → concentrações=0)
-    y_pred_constrained = apply_physical_constraints(y_pred, time_array)
-    
-    # Extrair resultados
-    return pd.DataFrame(
-        {
-            "Time (h)": time_array,
-            "Glucose": y_pred_constrained[:, 0],
-            "Xylose": y_pred_constrained[:, 1],
-            "Cellobiose": y_pred_constrained[:, 2],
-        }
-    )
+def load_experiments() -> tuple[pd.DataFrame, pd.DataFrame]:
+    return pd.read_csv(EXPERIMENTAL / "pretreatment.csv"), pd.read_csv(EXPERIMENTAL / "hydrolysis.csv")
+
+
+@st.cache_data(show_spinner=False)
+def run_pretreatment(temperature: float, solids: float, cellulose_pct: float, hemicellulose_pct: float):
+    t = np.arange(0.0, PRE_T_MAX + 0.25, 0.5)
+    central, ens = load_models()["pre"].simulate_ensemble(temperature, t, solids, cellulose_pct / 100, hemicellulose_pct / 100)
+    return t, central, ens
+
+
+@st.cache_data(show_spinner=False)
+def run_hydrolysis(cellulose_pct: float, hemicellulose_pct: float, solids: float, enzyme: float):
+    t = np.arange(0.0, HYD_T_MAX + 0.25, 0.5)
+    central, ens = load_models()["hyd"].simulate_ensemble(solids, enzyme, cellulose_pct / 100, hemicellulose_pct / 100, t)
+    return t, central, ens
+
+
+def at_time(t: np.ndarray, series: np.ndarray, t_sel: float):
+    """Valor no tempo escolhido; aceita uma série (tempos) ou um ensemble (membros x tempos)."""
+    if series.ndim == 1:
+        return float(np.interp(t_sel, t, series))
+    return np.array([np.interp(t_sel, t, s) for s in series])
+
+
+def band(values: np.ndarray) -> tuple[float, float]:
+    return float(np.percentile(values, BAND[0])), float(np.percentile(values, BAND[1]))
+
+
+def band_series(ens: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    return np.percentile(ens, BAND[0], axis=0), np.percentile(ens, BAND[1], axis=0)
 
 
 # ============================================================================
@@ -337,6 +81,8 @@ SERIES_COLORS = {
     "Hemicellulose": "#eb6834",
     "Glucose": "#2a78d6",
     "Xylose": "#eb6834",
+    "Xylo-oligomers": "#1baf7a",
+    "Furfural": "#eda100",
     "Cellobiose": "#1baf7a",
 }
 INK = "#10231D"
@@ -346,6 +92,11 @@ GRID = "#E6ECE9"
 AXIS = "#C9D5D0"
 CHART_FONT = "Inter, system-ui, sans-serif"
 PLOTLY_CONFIG = {"displaylogo": False, "displayModeBar": False}
+
+
+def hex_to_rgba(color: str, alpha: float) -> str:
+    c = color.lstrip("#")
+    return f"rgba({int(c[0:2], 16)}, {int(c[2:4], 16)}, {int(c[4:6], 16)}, {alpha})"
 
 
 def style_figure(fig: go.Figure, height: int) -> go.Figure:
@@ -416,6 +167,37 @@ def add_extrapolation_zone(
     fig.add_vrect(**kwargs)
 
 
+
+
+def add_band(fig: go.Figure, x, lo, hi, name: str, **subplot) -> None:
+    """Faixa de incerteza (percentis 5–95 do ensemble) na cor da série."""
+    color = SERIES_COLORS[name]
+    fig.add_trace(go.Scatter(x=x, y=hi, mode="lines", line=dict(width=0), showlegend=False, hoverinfo="skip"), **subplot)
+    fig.add_trace(go.Scatter(x=x, y=lo, mode="lines", line=dict(width=0), fill="tonexty",
+                             fillcolor=hex_to_rgba(color, 0.14), showlegend=False, hoverinfo="skip"), **subplot)
+
+
+def add_experiment(fig: go.Figure, x, y, name: str, error=None, show_legend: bool = False, **subplot) -> None:
+    """Pontos experimentais (marcador vazado na cor da série, com barra de erro se houver)."""
+    fig.add_trace(
+        go.Scatter(
+            x=x, y=y, mode="markers", name="Experiment", legendgroup="experiment", showlegend=show_legend,
+            marker=dict(size=8, color="white", line=dict(color=SERIES_COLORS[name], width=2)),
+            error_y=dict(type="data", array=error, color=SERIES_COLORS[name], thickness=1, width=3) if error is not None else None,
+            hovertemplate=f"{name} (experiment): %{{y:.2f}} g/L<extra></extra>",
+        ),
+        **subplot,
+    )
+
+
+def plot_series(fig, t, central, ens, key, name, unit="g/L", t_sel=None, **subplot):
+    lo, hi = band_series(ens[key])
+    add_band(fig, t, lo, hi, name, **subplot)
+    add_series(fig, t, central[key], name, unit, **subplot)
+    if t_sel is not None:
+        add_point(fig, t_sel, float(np.interp(t_sel, t, central[key])), name, **subplot)
+
+
 # ============================================================================
 # COMPONENTES DE INTERFACE
 # ============================================================================
@@ -436,59 +218,45 @@ def empty_state(title: str, text: str) -> None:
     st.html(f'<div class="empty-state"><strong>{title}</strong>{text}</div>')
 
 
-def cellulose_bounds(ranges: dict) -> tuple[float, float]:
-    """Faixa de celulose que permite lignina (por diferença) dentro da faixa de treino."""
-    lo = max(ranges["cellulose"][0], 100.0 - ranges["lignin"][1] - ranges["hemicellulose"][1])
-    hi = min(ranges["cellulose"][1], 100.0 - ranges["lignin"][0] - ranges["hemicellulose"][0])
-    return lo, hi
 
-
-def model_slider(
-    label: str, key: str, train: tuple[float, float], value: float, step: float, fmt: str,
-    flags: list[str], floor: float | None = None, help: str | None = None,
-) -> float:
+def model_slider(var: Variable, key: str, flags: list[str], default: float | None = None) -> float:
     """
-    Slider que cobre a faixa de treino do modelo mais a margem de extrapolação.
-    A trilha é verde na faixa de treino e âmbar nas pontas extrapoladas. Se o valor cair nelas, o marcador
-    fica âmbar, a etiqueta "Extrapolating" aparece no rótulo e o nome da variável entra em `flags`.
+    Slider na faixa do app (ethanol_ai/domain.py). A trilha é verde onde há suporte experimental
+    e âmbar fora dele. Se o valor cair na parte âmbar, o marcador fica âmbar, a etiqueta
+    "Extrapolating" aparece no rótulo e o nome da variável entra em `flags`.
     """
-    lo, hi = extended_limits(train, step, floor)
-    value = st.slider(label, min_value=lo, max_value=hi, value=value, step=step, format=fmt, key=key, help=help)
-
-    # Onde começa e termina a faixa de treino na trilha (em % da largura); o CSS pinta o resto de âmbar
+    lo, hi = var.slider_range()
+    value = st.slider(f"{var.label} ({var.unit})", min_value=lo, max_value=hi,
+                      value=var.default if default is None else default, step=var.step,
+                      format=var.fmt, key=key, help=var.help)
     span = hi - lo
-    left = max(0.0, (train[0] - lo) / span * 100)
-    right = min(100.0, (train[1] - lo) / span * 100)
+    left = max(0.0, (var.validated[0] - lo) / span * 100)
+    right = min(100.0, (var.validated[1] - lo) / span * 100)
     css = f".st-key-{key} {{ --zone-left: {left:.3f}%; --zone-right: {right:.3f}%; }}"
-    if not (train[0] <= value <= train[1]):
-        flags.append(label.split(" (")[0])
+    if not var.is_validated(value):
+        flags.append(var.label)
         css += f' .st-key-{key} {{ --slider-accent: var(--extrapolation); --slider-badge: "Extrapolating"; }}'
     st.html(f"<style>{css}</style>")
     return value
 
 
-def lignin_by_difference(cellulose: float, hemicellulose: float, ranges: dict, flags: list[str]) -> float:
-    """Mostra a lignina calculada por diferença, marcando quando ela sai da faixa de treino."""
-    lignin = 100.0 - cellulose - hemicellulose
-    lo, hi = ranges["lignin"]
-    if lo <= lignin <= hi:
-        st.html(f'<div class="computed-field"><span>Lignin (by difference)</span><strong>{lignin:.1f}%</strong></div>')
-    else:
-        flags.append("Lignin")
-        st.html(
-            '<div class="computed-field extrapolated"><span>Lignin (by difference)<em>Extrapolating</em></span>'
-            f'<strong>{lignin:.1f}%</strong></div>'
-            f'<p class="computed-hint">Model trained on {lo:.0f}–{hi:.0f}% lignin. Adjust cellulose or hemicellulose.</p>'
-        )
-    return lignin
+def composition_rest(cellulose_pct: float, hemicellulose_pct: float, label: str) -> None:
+    """Mostra o restante da composição (não entra nos modelos)."""
+    rest = 100.0 - cellulose_pct - hemicellulose_pct
+    st.html(f'<div class="computed-field"><span>{label}</span><strong>{rest:.1f}%</strong></div>')
+
+
+def metric_band(label: str, value: float, lo: float, hi: float, fmt: str, unit: str, help: str | None = None) -> None:
+    st.metric(label, f"{value:{fmt}}{unit}", delta=f"{lo:{fmt}}–{hi:{fmt}}{unit}", delta_color="off",
+              delta_arrow="off", help=help)
 
 
 def extrapolation_banner(flags: list[str]) -> None:
-    """Resumo, no cartão de resultados, das entradas fora da faixa de treino."""
+    """Resumo, no cartão de resultados, das entradas fora da faixa com suporte experimental."""
     if flags:
         st.html(
             f'<div class="extrap-banner"><span class="extrap-tag">Extrapolating</span>'
-            f'{", ".join(flags)} outside the training range. Results are less reliable.</div>'
+            f'{", ".join(flags)} outside the experimentally validated range. Results are less reliable.</div>'
         )
 
 
@@ -624,12 +392,13 @@ def chart_exports(df: pd.DataFrame, chart_key: str, file_base: str, title: str, 
         st.dataframe(df.round(3), hide_index=True)
 
 
+
+
 # ============================================================================
 # PÁGINA
 # ============================================================================
 
-with open(os.path.join(ASSETS_DIR, "style.css"), encoding="utf-8") as css_file:
-    st.html(f"<style>{css_file.read()}</style>")
+st.html(f"<style>{(ROOT / 'assets' / 'style.css').read_text(encoding='utf-8')}</style>")
 
 ABOUT_TEXT = (
     "Ethanol AI is a tool created within a research program called scientific initiation by researchers "
@@ -658,13 +427,12 @@ st.html(f"""
 </section>
 """)
 
-if not model_loaded:
-    st.error(f"The ANN models could not be loaded: {load_error}", icon=":material/error:")
-
-tab_pre, tab_hyd = st.tabs([
+tab_pre, tab_hyd, tab_opt = st.tabs([
     ":material/local_fire_department: Pretreatment",
     ":material/science: Enzymatic hydrolysis",
+    ":material/tune: Optimization",
 ])
+exp_pre, exp_hyd = load_experiments()
 
 # ----------------------------------------------------------------------------
 # Etapa 1: Pré-tratamento
@@ -672,7 +440,8 @@ tab_pre, tab_hyd = st.tabs([
 with tab_pre:
     section_head(
         "01", "Hydrothermal pretreatment",
-        "Predict how much cellulose and hemicellulose remain in the biomass over the course of the pretreatment.",
+        "Predict how the biomass is solubilized over time: what remains in the solid and which sugars and "
+        "inhibitors reach the liquor.",
     )
     col_params, col_results = st.columns([1, 2], gap="large")
 
@@ -690,25 +459,24 @@ with tab_pre:
                 help="Note: Organosolv model is under development",
             )
 
-            group_label("Composition (% w/w)")
-            R = PRETREATMENT_RANGES
+            V = PRETREATMENT
             flags_pre: list[str] = []
-            celulose = model_slider("Cellulose (%)", "pre_cellulose", cellulose_bounds(R), 40.0, 0.5, "%.1f", flags_pre)
-            hemicelulose = model_slider("Hemicellulose (%)", "pre_hemicellulose", R["hemicellulose"], 30.0, 0.5, "%.1f", flags_pre)
-            lignina = lignin_by_difference(celulose, hemicelulose, R, flags_pre)
+            group_label("Composition (% w/w, dry basis)")
+            celulose = model_slider(V["cellulose"], "pre_cellulose", flags_pre)
+            hemicelulose = model_slider(V["hemicellulose"], "pre_hemicellulose", flags_pre)
+            composition_rest(celulose, hemicelulose, "Lignin, extractives and ash")
 
             group_label("Operating conditions")
-            solid_loading_hydro = model_slider("Solids loading (g/L)", "pre_solids", R["solids"], 100.0, 1.0, "%.0f", flags_pre)
-            temperature_hydro = model_slider("Temperature (°C)", "pre_temperature", R["temperature"], 195.0, 0.5, "%.1f", flags_pre)
-            time_hydro = model_slider("Time (min)", "pre_time", R["time"], 15.0, 0.5, "%.1f", flags_pre, floor=1.0)
+            temperature = model_slider(V["temperature"], "pre_temperature", flags_pre)
+            time_pre = model_slider(V["time"], "pre_time", flags_pre)
+            solids_pre = model_slider(V["solids"], "pre_solids", flags_pre)
 
     with col_results:
         with st.container(key="card-pre-results"):
             card_header(
                 "Results",
-                f"{biomassa} · {pretratamento} · {temperature_hydro:.1f} °C · {solid_loading_hydro:.0f} g/L · t = {time_hydro:.1f} min",
+                f"{biomassa} · {pretratamento} · {temperature:.1f} °C · {solids_pre:.0f} g/L · t = {time_pre:.1f} min",
             )
-
             if not (pretratamento == "Hydrothermal" and biomassa == "Sugarcane Straw"):
                 if biomassa == 'Sugarcane Bagasse':
                     empty_state("Model under development", "Models for Sugarcane Bagasse are not available yet.")
@@ -716,56 +484,75 @@ with tab_pre:
                     empty_state("Model under development", f"The Organosolv pretreatment model for {biomassa} is not available yet.")
             else:
                 extrapolation_banner(flags_pre)
-                try:
-                    results = simulate_pretreatment_ann(
-                        temperature=temperature_hydro,
-                        solid_loading=solid_loading_hydro,
-                        cellulose_percent=celulose,
-                        hemicellulose_percent=hemicelulose,
-                        lignin_percent=lignina,
-                        time_final=time_hydro,
-                    )
-                except Exception as e:
-                    st.error(f"Error in simulation: {e}", icon=":material/error:")
+                t, c, ens = run_pretreatment(temperature, solids_pre, celulose, hemicelulose)
+                H0, C0 = solids_pre * hemicelulose / 100, solids_pre * celulose / 100
+
+                hemi_sol = 100 * (1 - at_time(t, c["hemicellulose"], time_pre) / H0)
+                hemi_sol_m = 100 * (1 - at_time(t, ens["hemicellulose"], time_pre) / H0)
+                cel_loss = 100 * (1 - at_time(t, c["cellulose"], time_pre) / C0)
+                cel_loss_m = 100 * (1 - at_time(t, ens["cellulose"], time_pre) / C0)
+                c5 = at_time(t, c["xylose"] + c["xylooligomers"], time_pre)
+                c5_m = at_time(t, ens["xylose"] + ens["xylooligomers"], time_pre)
+                fur = at_time(t, c["furfural"], time_pre)
+                fur_m = at_time(t, ens["furfural"], time_pre)
+
+                with st.container(horizontal=True, gap="small", key="metrics-pre"):
+                    metric_band("Hemicellulose solubilized", hemi_sol, *band(hemi_sol_m), ".1f", "%")
+                    metric_band("Cellulose lost", cel_loss, *band(cel_loss_m), ".1f", "%",
+                                help="Cellulose converted to soluble products or degraded. Inferred from the liquor "
+                                     "composition (the solid was not measured): likely an upper estimate.")
+                    metric_band("C5 sugars in liquor", c5, *band(c5_m), ".1f", " g/L",
+                                help="Xylose + arabinose and their oligomers, as monomer equivalents")
+                    metric_band("Furfural", fur, *band(fur_m), ".2f", " g/L",
+                                help="Fermentation inhibitor formed from pentoses")
+
+                st.caption("Below each value: 90% range across the network ensemble (calibration uncertainty).")
+                fig = make_subplots(rows=2, cols=1, shared_xaxes=True, vertical_spacing=0.1, row_heights=[0.45, 0.55])
+                plot_series(fig, t, c, ens, "cellulose", "Cellulose", t_sel=time_pre, row=1, col=1)
+                plot_series(fig, t, c, ens, "hemicellulose", "Hemicellulose", t_sel=time_pre, row=1, col=1)
+                plot_series(fig, t, c, ens, "glucose", "Glucose", t_sel=time_pre, row=2, col=1)
+                plot_series(fig, t, c, ens, "xylose", "Xylose", t_sel=time_pre, row=2, col=1)
+                plot_series(fig, t, c, ens, "xylooligomers", "Xylo-oligomers", t_sel=time_pre, row=2, col=1)
+                plot_series(fig, t, c, ens, "furfural", "Furfural", t_sel=time_pre, row=2, col=1)
+
+                # Dados experimentais quando as condições coincidem com um ensaio de calibração
+                g = exp_pre[(exp_pre.temperature_C - temperature).abs() <= 0.25]
+                matches = (len(g) and abs(solids_pre - 100) <= 0.5 and abs(celulose - 34.8) <= 0.05
+                           and abs(hemicelulose - 23.0) <= 0.05)
+                if matches:
+                    add_experiment(fig, g.time_min, g.glucose_g_L, "Glucose", show_legend=True, row=2, col=1)
+                    add_experiment(fig, g.time_min, g.xylose_g_L + g.arabinose_g_L, "Xylose", row=2, col=1)
+                    add_experiment(fig, g.time_min, g.xylooligomers_g_L + g.arabinooligomers_g_L, "Xylo-oligomers", row=2, col=1)
+                    add_experiment(fig, g.time_min, g.furfural_g_L, "Furfural", row=2, col=1)
+
+                add_time_marker(fig, time_pre, f"t = {time_pre:.1f} min", row=1, col=1)
+                add_time_marker(fig, time_pre, row=2, col=1)
+                t_val = PRETREATMENT["time"].validated[1]
+                add_extrapolation_zone(fig, t_val, PRE_T_MAX, row=1, col=1)
+                add_extrapolation_zone(fig, t_val, PRE_T_MAX, label=False, row=2, col=1)
+                style_figure(fig, height=560)
+                fig.update_xaxes(title_text="Time after heat-up (min)", row=2, col=1)
+                fig.update_yaxes(title_text="Solid (g/L)", row=1, col=1)
+                fig.update_yaxes(title_text="Liquor (g/L)", row=2, col=1)
+                st.plotly_chart(fig, width="stretch", theme=None, config=PLOTLY_CONFIG, key="chart-pre")
+                if matches:
+                    st.caption("Points: liquor measured at these conditions (Rocha et al., 2017). Shaded bands: 90% range from the calibration uncertainty.")
                 else:
-                    # Valores no tempo escolhido
-                    cellulose_at_time = float(np.interp(time_hydro, results['time'], results['cellulose']))
-                    hemicellulose_at_time = float(np.interp(time_hydro, results['time'], results['hemicellulose']))
+                    st.caption("Shaded bands: 90% range from the calibration uncertainty. Experimental points appear for "
+                               "180, 195 or 210 °C with the calibration straw (34.8% cellulose, 23.0% hemicellulose, 100 g/L).")
 
-                    C0 = solid_loading_hydro * (celulose / 100.0)
-                    H0 = solid_loading_hydro * (hemicelulose / 100.0)
-                    cellulose_degraded = ((C0 - cellulose_at_time) / C0 * 100) if C0 > 0 else 0
-                    hemicellulose_degraded = ((H0 - hemicellulose_at_time) / H0 * 100) if H0 > 0 else 0
-
-                    with st.container(horizontal=True, gap="small", key="metrics-pre"):
-                        st.metric("Cellulose degraded", f"{cellulose_degraded:.1f}%")
-                        st.metric("Hemicellulose degraded", f"{hemicellulose_degraded:.1f}%")
-                        st.metric("Cellulose remaining", f"{cellulose_at_time:.1f} g/L")
-                        st.metric("Hemicellulose remaining", f"{hemicellulose_at_time:.1f} g/L")
-
-                    fig = go.Figure()
-                    add_series(fig, results["time"], results["cellulose"], "Cellulose", "g/L")
-                    add_series(fig, results["time"], results["hemicellulose"], "Hemicellulose", "g/L")
-                    add_point(fig, time_hydro, cellulose_at_time, "Cellulose")
-                    add_point(fig, time_hydro, hemicellulose_at_time, "Hemicellulose")
-                    add_time_marker(fig, time_hydro, f"t = {time_hydro:.1f} min")
-                    add_extrapolation_zone(fig, PRETREATMENT_RANGES["time"][1], PRE_TIME_MAX)
-                    style_figure(fig, height=420)
-                    fig.update_xaxes(title_text="Time (min)")
-                    fig.update_yaxes(title_text="Concentration (g/L)")
-                    st.plotly_chart(fig, width="stretch", theme=None, config=PLOTLY_CONFIG, key="chart-pre")
-
-                    chart_exports(
-                        pd.DataFrame({
-                            'Time (min)': results['time'],
-                            'Cellulose (g/L)': results['cellulose'],
-                            'Hemicellulose (g/L)': results['hemicellulose'],
-                        }),
-                        "chart-pre", "pretreatment_profile",
-                        f"Hydrothermal pretreatment · {biomassa}",
-                        f"{temperature_hydro:.1f} °C · {solid_loading_hydro:.0f} g/L solids · {celulose:.1f}% cellulose · "
-                        f"{hemicelulose:.1f}% hemicellulose · {lignina:.1f}% lignin",
-                    )
+                table = pd.DataFrame({"Time (min)": t})
+                for key, label in [("cellulose", "Cellulose (g/L)"), ("hemicellulose", "Hemicellulose (g/L)"),
+                                   ("glucose", "Glucose (g/L)"), ("glucooligomers", "Gluco-oligomers (g/L)"),
+                                   ("hmf", "HMF (g/L)"), ("xylose", "Xylose (g/L)"),
+                                   ("xylooligomers", "Xylo-oligomers (g/L)"), ("furfural", "Furfural (g/L)")]:
+                    table[label] = c[key]
+                chart_exports(
+                    table, "chart-pre", "pretreatment_profile",
+                    f"Hydrothermal pretreatment · {biomassa}",
+                    f"{temperature:.1f} °C · {solids_pre:.0f} g/L solids · {celulose:.1f}% cellulose · "
+                    f"{hemicelulose:.1f}% hemicellulose",
+                )
 
 # ----------------------------------------------------------------------------
 # Etapa 2: Hidrólise enzimática
@@ -788,20 +575,18 @@ with tab_hyd:
             )
             enzyme = st.selectbox("Enzyme", ['Cellic CTEC-2 (Novozymes)'], key="hyd_enzyme")
 
-            group_label("Composition (% w/w)")
-            R = HYDROLYSIS_RANGES
+            V = HYDROLYSIS
             flags_hyd: list[str] = []
-            celulose1 = model_slider("Cellulose (%)", "hyd_cellulose", cellulose_bounds(R), 62.0, 0.1, "%.1f", flags_hyd)
-            hemicelulose1 = model_slider("Hemicellulose (%)", "hyd_hemicellulose", R["hemicellulose"], 12.0, 0.1, "%.1f", flags_hyd)
-            lignina1 = lignin_by_difference(celulose1, hemicelulose1, R, flags_hyd)
+            group_label("Pretreated solid composition (% w/w)")
+            celulose1 = model_slider(V["cellulose"], "hyd_cellulose", flags_hyd)
+            hemicelulose1 = model_slider(V["hemicellulose"], "hyd_hemicellulose", flags_hyd)
+            composition_rest(celulose1, hemicelulose1, "Lignin and others")
 
             group_label("Operating conditions")
-            solid_loading = model_slider("Solids loading (g/L)", "hyd_solids", R["solids"], 175.0, 1.0, "%.0f", flags_hyd, floor=10.0)
-            enzyme_loading = model_slider("Enzyme loading (g/L)", "hyd_enzyme_loading", R["enzyme"], 0.5, 0.01, "%.2f", flags_hyd, floor=0.01)
-            reaction_time = model_slider(
-                "Reaction time (h)", "hyd_time", R["time"], 60.0, 0.5, "%.1f", flags_hyd, floor=1.0,
-                help=f"The profile is always simulated up to {HYD_TIME_MAX:.0f} h; results are read at this time.",
-            )
+            solid_loading = model_slider(V["solids"], "hyd_solids", flags_hyd)
+            enzyme_loading = model_slider(V["enzyme"], "hyd_enzyme_loading", flags_hyd)
+            st.caption(f"≈ {fpu_per_g_cellulose(enzyme_loading, solid_loading, celulose1 / 100):.1f} FPU/g cellulose")
+            reaction_time = model_slider(V["time"], "hyd_time", flags_hyd)
 
     with col_results:
         with st.container(key="card-hyd-results"):
@@ -809,71 +594,241 @@ with tab_hyd:
                 "Results",
                 f"{biomassa_hydrolysis} · {enzyme} · {solid_loading:.0f} g/L solids · {enzyme_loading:.2f} g/L enzyme · t = {reaction_time:.1f} h",
             )
-
             if biomassa_hydrolysis != 'Sugarcane Straw':
                 empty_state("Model under development", "The Sugarcane Bagasse model for Enzymatic Hydrolysis is not available yet.")
             else:
                 extrapolation_banner(flags_hyd)
-                try:
-                    profile_df = simulate_enzymatic_hydrolysis(
-                        solid_loading=solid_loading,
-                        enzyme_loading=enzyme_loading,
-                        cellulose_percent=celulose1,
-                        hemicellulose_percent=hemicelulose1,
-                        lignin_percent=lignina1,
-                        reaction_time=reaction_time,
-                    )
-                except Exception as exc:
-                    st.error(f"Error while running hydrolysis simulation: {exc}", icon=":material/error:")
+                t, c, ens = run_hydrolysis(celulose1, hemicelulose1, solid_loading, enzyme_loading)
+                theo = GLUCAN_TO_GLUCOSE * solid_loading * celulose1 / 100
+                g_t, g_m = at_time(t, c["glucose"], reaction_time), at_time(t, ens["glucose"], reaction_time)
+                x_t, x_m = at_time(t, c["xylose"], reaction_time), at_time(t, ens["xylose"], reaction_time)
+                b_t, b_m = at_time(t, c["cellobiose"], reaction_time), at_time(t, ens["cellobiose"], reaction_time)
+
+                with st.container(horizontal=True, gap="small", key="metrics-hyd"):
+                    metric_band("Glucose", g_t, *band(g_m), ".1f", " g/L")
+                    metric_band("Glucose yield", 100 * g_t / theo, *band(100 * g_m / theo), ".1f", "%",
+                                help=f"Percentage of the theoretical maximum glucose ({theo:.1f} g/L, complete cellulose hydrolysis)")
+                    metric_band("Xylose", x_t, *band(x_m), ".1f", " g/L")
+                    metric_band("Cellobiose", b_t, *band(b_m), ".2f", " g/L")
+
+                st.caption("Below each value: 90% range across the network ensemble (calibration uncertainty).")
+                # Glicose tem escala muito maior que xilose e celobiose: dois painéis com o mesmo eixo de tempo
+                fig = make_subplots(rows=2, cols=1, shared_xaxes=True, vertical_spacing=0.08, row_heights=[0.55, 0.45])
+                plot_series(fig, t, c, ens, "glucose", "Glucose", t_sel=reaction_time, row=1, col=1)
+                plot_series(fig, t, c, ens, "xylose", "Xylose", t_sel=reaction_time, row=2, col=1)
+                plot_series(fig, t, c, ens, "cellobiose", "Cellobiose", t_sel=reaction_time, row=2, col=1)
+
+                e = exp_hyd[(exp_hyd.solids_g_L - solid_loading).abs().le(0.5)
+                            & (exp_hyd.enzyme_g_L - enzyme_loading).abs().le(0.006)]
+                matches = (len(e) and abs(celulose1 - 100 * e.cellulose_frac.iloc[0]) <= 0.1
+                           and abs(hemicelulose1 - 100 * e.hemicellulose_frac.iloc[0]) <= 0.05)
+                if matches:
+                    add_experiment(fig, e.time_h, e.glucose_g_L, "Glucose", e.glucose_sd, show_legend=True, row=1, col=1)
+                    add_experiment(fig, e.time_h, e.xylose_g_L, "Xylose", e.xylose_sd, row=2, col=1)
+                    ok = ~(e.cellobiose_censored | e.replicates_identical)
+                    add_experiment(fig, e.time_h[ok], e.cellobiose_g_L[ok], "Cellobiose", e.cellobiose_sd[ok], row=2, col=1)
+
+                add_time_marker(fig, reaction_time, f"t = {reaction_time:.1f} h", row=1, col=1)
+                add_time_marker(fig, reaction_time, row=2, col=1)
+                t_val = HYDROLYSIS["time"].validated[1]
+                add_extrapolation_zone(fig, t_val, HYD_T_MAX, label_position="inside bottom right", row=1, col=1)
+                add_extrapolation_zone(fig, t_val, HYD_T_MAX, label=False, row=2, col=1)
+                style_figure(fig, height=520)
+                fig.update_xaxes(title_text="Time (h)", row=2, col=1)
+                fig.update_yaxes(title_text="Glucose (g/L)", row=1, col=1)
+                fig.update_yaxes(title_text="Xylose, cellobiose (g/L)", row=2, col=1)
+                st.plotly_chart(fig, width="stretch", theme=None, config=PLOTLY_CONFIG, key="chart-hyd")
+                if matches:
+                    st.caption("Points: experiment at these conditions (mean ± SD of duplicates). Shaded bands: 90% range from the calibration uncertainty.")
                 else:
-                    # Valores no tempo de reação escolhido
-                    time_h = profile_df["Time (h)"]
-                    glucose_at_time = float(np.interp(reaction_time, time_h, profile_df["Glucose"]))
-                    xylose_at_time = float(np.interp(reaction_time, time_h, profile_df["Xylose"]))
-                    cellobiose_at_time = float(np.interp(reaction_time, time_h, profile_df["Cellobiose"]))
+                    st.caption("Shaded bands: 90% range from the calibration uncertainty. Experimental points appear when the "
+                               "conditions match one of the 8 calibration runs (66.6% cellulose, 8.2% xylan).")
 
-                    # Rendimento teórico: 1.111 g glicose por g de celulose (conversão estequiométrica)
-                    cellulose_initial = solid_loading * (celulose1 / 100.0)
-                    glucose_theoretical = cellulose_initial * 1.111
-                    glucose_yield_percent = (glucose_at_time / glucose_theoretical) * 100 if glucose_theoretical > 0 else 0
+                chart_exports(
+                    pd.DataFrame({"Time (h)": t, "Glucose (g/L)": c["glucose"], "Xylose (g/L)": c["xylose"],
+                                  "Cellobiose (g/L)": c["cellobiose"]}),
+                    "chart-hyd", "enzymatic_hydrolysis_profile",
+                    f"Enzymatic hydrolysis · {biomassa_hydrolysis} · {enzyme}",
+                    f"{solid_loading:.0f} g/L solids · {enzyme_loading:.2f} g/L enzyme · {celulose1:.1f}% cellulose · "
+                    f"{hemicelulose1:.1f}% xylan",
+                )
 
-                    with st.container(horizontal=True, gap="small", key="metrics-hyd"):
-                        st.metric("Glucose", f"{glucose_at_time:.2f} g/L")
-                        st.metric("Glucose yield", f"{glucose_yield_percent:.1f}%",
-                                  help=f"Percentage of the theoretical maximum glucose ({glucose_theoretical:.2f} g/L, complete cellulose hydrolysis)")
-                        st.metric("Xylose", f"{xylose_at_time:.2f} g/L")
-                        st.metric("Cellobiose", f"{cellobiose_at_time:.2f} g/L")
+# ----------------------------------------------------------------------------
+# Etapa 3: Otimização
+# ----------------------------------------------------------------------------
+@st.cache_data(show_spinner=False)
+def cached_frontier(cel_pct, hemi_pct, solids, target_pct, t_max):
+    return enzyme_frontier(load_models()["hyd"], cel_pct / 100, hemi_pct / 100, solids, target_pct / 100, t_max,
+                           HYDROLYSIS["enzyme"].slider_range())
 
-                    # Glicose tem escala muito maior que xilose e celobiose: dois painéis com o mesmo eixo de tempo
-                    fig = make_subplots(rows=2, cols=1, shared_xaxes=True, vertical_spacing=0.08, row_heights=[0.55, 0.45])
-                    add_series(fig, time_h, profile_df["Glucose"], "Glucose", "g/L", row=1, col=1)
-                    add_series(fig, time_h, profile_df["Xylose"], "Xylose", "g/L", row=2, col=1)
-                    add_series(fig, time_h, profile_df["Cellobiose"], "Cellobiose", "g/L", row=2, col=1)
-                    add_point(fig, reaction_time, glucose_at_time, "Glucose", row=1, col=1)
-                    add_point(fig, reaction_time, xylose_at_time, "Xylose", row=2, col=1)
-                    add_point(fig, reaction_time, cellobiose_at_time, "Cellobiose", row=2, col=1)
-                    add_time_marker(fig, reaction_time, f"t = {reaction_time:.1f} h", row=1, col=1)
-                    add_time_marker(fig, reaction_time, row=2, col=1)
-                    add_extrapolation_zone(
-                        fig, HYDROLYSIS_RANGES["time"][1], HYD_TIME_MAX, label_position="inside bottom right", row=1, col=1,
-                    )
-                    add_extrapolation_zone(fig, HYDROLYSIS_RANGES["time"][1], HYD_TIME_MAX, label=False, row=2, col=1)
-                    style_figure(fig, height=520)
-                    fig.update_xaxes(title_text="Time (h)", row=2, col=1)
-                    fig.update_yaxes(title_text="Glucose (g/L)", row=1, col=1)
-                    fig.update_yaxes(title_text="Xylose, cellobiose (g/L)", row=2, col=1)
-                    st.plotly_chart(fig, width="stretch", theme=None, config=PLOTLY_CONFIG, key="chart-hyd")
 
-                    chart_exports(
-                        profile_df, "chart-hyd", "enzymatic_hydrolysis_profile",
-                        f"Enzymatic hydrolysis · {biomassa_hydrolysis} · {enzyme}",
-                        f"{solid_loading:.0f} g/L solids · {enzyme_loading:.2f} g/L enzyme · {celulose1:.1f}% cellulose · "
-                        f"{hemicelulose1:.1f}% hemicellulose · {lignina1:.1f}% lignin",
-                    )
+@st.cache_data(show_spinner=False)
+def cached_pre_map(solids, cel_pct, hemi_pct, furfural_max, cel_loss_max):
+    return pretreatment_map(load_models()["pre"], solids, cel_pct / 100, hemi_pct / 100,
+                            PRETREATMENT["temperature"].slider_range(), (0.0, PRE_T_MAX),
+                            furfural_max, cel_loss_max / 100)
+
+
+with tab_opt:
+    section_head(
+        "03", "Process optimization",
+        "Search the operating conditions that meet a target, using the neural networks over the whole decision space. "
+        "Each recommendation is checked against the calibrated kinetic model.",
+    )
+
+    # --- 3a. Dose de enzima
+    col_params, col_results = st.columns([1, 2], gap="large")
+    with col_params:
+        with st.container(key="card-opt-hyd-params"):
+            card_header("Enzyme dosage", "Lowest enzyme loading that reaches a glucose yield in time")
+            flags_oh: list[str] = []
+            group_label("Pretreated solid", first=True)
+            oh_cel = model_slider(HYDROLYSIS["cellulose"], "oh_cellulose", flags_oh)
+            oh_hemi = model_slider(HYDROLYSIS["hemicellulose"], "oh_hemicellulose", flags_oh)
+            oh_solids = model_slider(HYDROLYSIS["solids"], "oh_solids", flags_oh)
+            group_label("Target")
+            oh_target = st.slider("Glucose yield target (%)", 20.0, 75.0, 55.0, 1.0, format="%.0f", key="oh_target",
+                                  help="The calibrated model has a recalcitrant cellulose fraction: yields above ~70% are not reachable")
+            oh_tmax = st.slider("Maximum reaction time (h)", 6.0, 96.0, 48.0, 1.0, format="%.0f", key="oh_tmax")
+
+    with col_results:
+        with st.container(key="card-opt-hyd-results"):
+            card_header("Recommendation", f"{oh_solids:.0f} g/L solids · {oh_cel:.1f}% cellulose · target {oh_target:.0f}% in {oh_tmax:.0f} h")
+            extrapolation_banner(flags_oh)
+            fr = cached_frontier(oh_cel, oh_hemi, oh_solids, oh_target, oh_tmax)
+            if fr.best_central is None:
+                empty_state("Target not reachable", f"No enzyme loading in {HYDROLYSIS['enzyme'].slider_range()[0]:.2f}–"
+                            f"{HYDROLYSIS['enzyme'].slider_range()[1]:.2f} g/L reaches {oh_target:.0f}% within {oh_tmax:.0f} h. "
+                            "Lower the target or allow more time.")
+            else:
+                mech = load_models()["hyd_mech"]
+                theo = GLUCAN_TO_GLUCOSE * oh_solids * oh_cel / 100
+                check = mech.simulate(oh_solids, fr.best_central, oh_cel / 100, oh_hemi / 100, [oh_tmax])["glucose"][0] / theo
+                with st.container(horizontal=True, gap="small", key="metrics-opt-hyd"):
+                    st.metric("Minimum enzyme", f"{fr.best_central:.2f} g/L",
+                              delta=f"{fpu_per_g_cellulose(fr.best_central, oh_solids, oh_cel / 100):.1f} FPU/g cellulose",
+                              delta_color="off", delta_arrow="off")
+                    if fr.best_conservative is not None:
+                        st.metric("Conservative", f"{fr.best_conservative:.2f} g/L",
+                                  delta=f"{fpu_per_g_cellulose(fr.best_conservative, oh_solids, oh_cel / 100):.1f} FPU/g cellulose",
+                                  delta_color="off", delta_arrow="off",
+                                  help="Reaches the target even at the 10th percentile of the calibration uncertainty")
+                    else:
+                        st.metric("Conservative", "Not reached", help="The target is not reached at the 10th percentile of the uncertainty")
+                    st.metric("Kinetic model check", f"{100 * check:.1f}%",
+                              delta=f"yield at {fr.best_central:.2f} g/L, {oh_tmax:.0f} h", delta_color="off", delta_arrow="off",
+                              help="Calibrated kinetic model evaluated at the recommended loading and maximum time")
+
+                fig = go.Figure()
+                ok = ~np.isnan(fr.t_reach_central)
+                fig.add_trace(go.Scatter(x=fr.enzyme_g_L[ok], y=fr.t_reach_central[ok], mode="lines", name="Central estimate",
+                                         line=dict(color=SERIES_COLORS["Glucose"], width=2),
+                                         hovertemplate="%{x:.3f} g/L → %{y:.1f} h<extra></extra>"))
+                okc = ~np.isnan(fr.t_reach_conservative)
+                fig.add_trace(go.Scatter(x=fr.enzyme_g_L[okc], y=fr.t_reach_conservative[okc], mode="lines", name="Conservative (10th percentile)",
+                                         line=dict(color=SERIES_COLORS["Glucose"], width=2, dash="dash"),
+                                         hovertemplate="%{x:.3f} g/L → %{y:.1f} h<extra></extra>"))
+                fig.add_hline(y=oh_tmax, line_dash="dot", line_color=INK_SECONDARY, line_width=1,
+                              annotation_text=f"time limit {oh_tmax:.0f} h", annotation_position="top right",
+                              annotation_font=dict(color=INK_SECONDARY, size=12))
+                fig.add_trace(go.Scatter(x=[fr.best_central], y=[float(np.interp(fr.best_central, fr.enzyme_g_L[ok], fr.t_reach_central[ok]))],
+                                         mode="markers", name="Recommended", showlegend=False, hoverinfo="skip",
+                                         marker=dict(size=12, color=SERIES_COLORS["Glucose"], line=dict(color="white", width=2))))
+                style_figure(fig, height=400)
+                fig.update_layout(hovermode="closest")
+                fig.update_xaxes(type="log", title_text="Enzyme loading (g/L, log scale)")
+                fig.update_yaxes(title_text=f"Time to reach {oh_target:.0f}% yield (h)")
+                st.plotly_chart(fig, width="stretch", theme=None, config=PLOTLY_CONFIG, key="chart-opt-hyd")
+                st.caption("Each point on the curve is a combination of enzyme loading and time that reaches the target: "
+                           "more enzyme, less time. The recommendation is the lowest loading that meets the time limit.")
+                chart_exports(
+                    pd.DataFrame({"Enzyme loading (g/L)": fr.enzyme_g_L, "Time to target, central (h)": fr.t_reach_central,
+                                  "Time to target, conservative (h)": fr.t_reach_conservative}),
+                    "chart-opt-hyd", "enzyme_frontier",
+                    f"Enzyme loading to reach {oh_target:.0f}% glucose yield",
+                    f"{oh_solids:.0f} g/L solids · {oh_cel:.1f}% cellulose · {oh_hemi:.1f}% xylan",
+                )
+
+    st.html('<div style="height: 18px"></div>')
+
+    # --- 3b. Condições do pré-tratamento
+    col_params, col_results = st.columns([1, 2], gap="large")
+    with col_params:
+        with st.container(key="card-opt-pre-params"):
+            card_header("Pretreatment conditions", "Recover hemicellulose sugars while limiting inhibitors and cellulose loss")
+            flags_op: list[str] = []
+            group_label("Feedstock", first=True)
+            op_cel = model_slider(PRETREATMENT["cellulose"], "op_cellulose", flags_op)
+            op_hemi = model_slider(PRETREATMENT["hemicellulose"], "op_hemicellulose", flags_op)
+            op_solids = model_slider(PRETREATMENT["solids"], "op_solids", flags_op)
+            group_label("Constraints")
+            op_fur = st.slider("Maximum furfural (g/L)", 0.2, 5.0, 1.0, 0.1, format="%.1f", key="op_furfural",
+                               help="Furfural inhibits the fermentation of the hydrolysate")
+            op_closs = st.slider("Maximum cellulose loss (%)", 2.0, 40.0, 10.0, 1.0, format="%.0f", key="op_closs",
+                                 help="Cellulose lost in the pretreatment is not available for the enzymatic hydrolysis")
+
+    with col_results:
+        with st.container(key="card-opt-pre-results"):
+            card_header("Recommendation", f"{op_solids:.0f} g/L solids · furfural ≤ {op_fur:.1f} g/L · cellulose loss ≤ {op_closs:.0f}%")
+            extrapolation_banner(flags_op)
+            mp = cached_pre_map(op_solids, op_cel, op_hemi, op_fur, op_closs)
+            if mp.best is None:
+                empty_state("No feasible condition", "No temperature and time meet both limits. Relax the furfural or cellulose loss limit.")
+            else:
+                b = mp.best
+                mech = load_models()["pre_mech"].simulate(b["temperature_C"], [b["time_min"]], op_solids, op_cel / 100, op_hemi / 100)
+                mech_rec = 100 * (mech["xylose"][0] + mech["xylooligomers"][0]) / XYLAN_TO_XYLOSE / (op_solids * op_hemi / 100)
+                out_of_range = [v.label for v, x in ((PRETREATMENT["temperature"], b["temperature_C"]), (PRETREATMENT["time"], b["time_min"]))
+                                if not v.is_validated(x)]
+                with st.container(horizontal=True, gap="small", key="metrics-opt-pre"):
+                    st.metric("Temperature", f"{b['temperature_C']:.1f} °C")
+                    st.metric("Time", f"{b['time_min']:.1f} min")
+                    st.metric("C5 sugars recovered", f"{100 * b['c5_recovery']:.1f}%",
+                              delta=f"kinetic model: {mech_rec:.1f}%", delta_color="off", delta_arrow="off",
+                              help="Xylan recovered in the liquor as xylose and xylo-oligomers")
+                    st.metric("Furfural", f"{b['furfural_g_L']:.2f} g/L", delta=f"cellulose loss {100 * b['cellulose_loss']:.1f}%",
+                              delta_color="off", delta_arrow="off")
+                if out_of_range:
+                    extrapolation_banner([f"Recommended {x.lower()}" for x in out_of_range])
+
+                fig = go.Figure()
+                fig.add_trace(go.Heatmap(
+                    x=mp.times_min, y=mp.temperature_C, z=100 * mp.c5_recovery, colorscale=[
+                        [0.0, "#f3f7f5"], [0.25, "#b7d3f6"], [0.5, "#6da7ec"], [0.75, "#2a78d6"], [1.0, "#104281"]],
+                    colorbar=dict(title=dict(text="C5 recovered (%)", side="right"), thickness=12, outlinewidth=0),
+                    hovertemplate="%{y:.1f} °C, %{x:.1f} min<br>C5 recovered %{z:.1f}%<extra></extra>",
+                ))
+                fig.add_trace(go.Heatmap(
+                    x=mp.times_min, y=mp.temperature_C, z=np.where(mp.feasible, np.nan, 1.0),
+                    colorscale=[[0, "rgba(255,255,255,0.72)"], [1, "rgba(255,255,255,0.72)"]], showscale=False, hoverinfo="skip",
+                ))
+                fig.add_trace(go.Scatter(x=[b["time_min"]], y=[b["temperature_C"]], mode="markers", name="Recommended",
+                                         marker=dict(size=14, symbol="star", color="#eb6834", line=dict(color="white", width=1.5)),
+                                         hovertemplate="Recommended: %{y:.1f} °C, %{x:.1f} min<extra></extra>"))
+                style_figure(fig, height=430)
+                fig.update_layout(hovermode="closest")
+                fig.update_yaxes(title_text="Temperature (°C)", rangemode="normal", showgrid=False)
+                fig.update_xaxes(title_text="Time after heat-up (min)")
+                st.plotly_chart(fig, width="stretch", theme=None, config=PLOTLY_CONFIG, key="chart-opt-pre")
+                st.caption("Color: share of the initial xylan recovered as fermentable C5 sugars. Faded area: conditions that break "
+                           "the furfural or cellulose-loss limit. The star is the best feasible condition.")
+                tt, TT = np.meshgrid(mp.times_min, mp.temperature_C)
+                chart_exports(
+                    pd.DataFrame({"Temperature (°C)": TT.ravel(), "Time (min)": tt.ravel(),
+                                  "C5 recovered (%)": 100 * mp.c5_recovery.ravel(), "Furfural (g/L)": mp.furfural_g_L.ravel(),
+                                  "Cellulose loss (%)": 100 * mp.cellulose_loss.ravel(), "Feasible": mp.feasible.ravel()}),
+                    "chart-opt-pre", "pretreatment_map",
+                    "Hemicellulose sugar recovery in the pretreatment",
+                    f"{op_solids:.0f} g/L solids · {op_cel:.1f}% cellulose · {op_hemi:.1f}% hemicellulose · "
+                    f"furfural ≤ {op_fur:.1f} g/L · cellulose loss ≤ {op_closs:.0f}%",
+                )
 
 st.html("""
 <footer class="footer">
   <span>Ethanol AI · Scientific initiation research at UFSCar in collaboration with DTU, funded by FAPESP.</span>
-  <a href="https://github.com/AugustoCoding/Ethanol-AI" target="_blank">Source code on GitHub ↗</a>
+  <span class="footer-links">
+    <a href="https://github.com/AugustoCoding/Ethanol-AI/blob/master/docs/METODOLOGIA.md" target="_blank">Methodology ↗</a>
+    <a href="https://github.com/AugustoCoding/Ethanol-AI" target="_blank">Source code on GitHub ↗</a>
+  </span>
 </footer>
 """)
