@@ -12,7 +12,9 @@
     --tile: #F3F7F5;
     --primary: #0F766E;
     --primary-dark: #0B3B32;
-    --accent: #F59E0B;
+    --accent: #2563EB;
+    --accent-light: #7DD3FC;
+    --extrapolation: #B45309;
     --heading-font: "Plus Jakarta Sans", "Inter", system-ui, sans-serif;
 }
 
@@ -20,7 +22,7 @@
 .stApp {
     background:
         radial-gradient(1100px 620px at -5% -10%, rgba(20, 184, 166, 0.18), transparent 60%),
-        radial-gradient(900px 520px at 105% 0%, rgba(245, 158, 11, 0.13), transparent 60%),
+        radial-gradient(900px 520px at 105% 0%, rgba(37, 99, 235, 0.13), transparent 60%),
         radial-gradient(1000px 700px at 50% 115%, rgba(15, 118, 110, 0.12), transparent 60%),
         #F5F8F6;
     background-attachment: fixed;
@@ -56,9 +58,9 @@
     padding: clamp(28px, 5vw, 56px);
     color: #ECFDF5;
     background:
-        radial-gradient(600px 300px at 90% 10%, rgba(245, 158, 11, 0.28), transparent 60%),
+        radial-gradient(600px 300px at 90% 10%, rgba(56, 189, 248, 0.35), transparent 60%),
         radial-gradient(500px 300px at 10% 110%, rgba(45, 212, 191, 0.30), transparent 60%),
-        linear-gradient(135deg, #0B3B32 0%, #0F5F55 45%, #0F766E 100%);
+        linear-gradient(135deg, #0B3B32 0%, #0F766E 50%, #1E5FA8 100%);
     box-shadow: 0 24px 60px -28px rgba(11, 59, 50, 0.65);
 }
 
@@ -108,7 +110,7 @@
 }
 
 .hero-title span {
-    background: linear-gradient(90deg, #FCD34D, #F59E0B);
+    background: linear-gradient(90deg, #A5F3FC, #60A5FA);
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -161,7 +163,7 @@
     font-size: 0.8rem;
     font-weight: 700;
     color: var(--primary-dark);
-    background: #FCD34D;
+    background: var(--accent-light);
 }
 
 .pipeline-step.soon {
@@ -261,7 +263,7 @@
     font-family: var(--heading-font);
     font-weight: 800;
     color: #FFFFFF;
-    background: linear-gradient(135deg, var(--primary-dark), var(--primary));
+    background: linear-gradient(135deg, var(--primary), var(--accent));
     box-shadow: 0 8px 18px -10px rgba(15, 118, 110, 0.9);
 }
 
@@ -341,6 +343,95 @@
 .computed-field strong {
     color: var(--ink);
     font-weight: 700;
+}
+
+.computed-field.extrapolated {
+    border-color: rgba(245, 158, 11, 0.6);
+    background: repeating-linear-gradient(135deg, rgba(245, 158, 11, 0.10) 0 6px, rgba(245, 158, 11, 0.04) 6px 12px);
+}
+
+.computed-field.extrapolated strong {
+    color: var(--extrapolation);
+}
+
+.computed-hint {
+    margin: 6px 2px 0 2px;
+    font-size: 0.78rem;
+    color: var(--extrapolation);
+}
+
+/* ---------- Sliders com zona de extrapolação ---------- */
+/* Faixas listradas em âmbar atrás da trilha, nas pontas fora do treino.
+   A largura de cada ponta é definida por slider em model_slider(). */
+.stSlider [role="group"] > div::before,
+.stSlider [role="group"] > div::after {
+    content: "";
+    position: absolute;
+    top: 16px;
+    left: 0;
+    width: 0;
+    height: 12px;
+    border-radius: 999px;
+    pointer-events: none;
+    z-index: 0;
+    background: repeating-linear-gradient(
+        135deg,
+        rgba(245, 158, 11, 0.55) 0 3px,
+        rgba(245, 158, 11, 0.22) 3px 6px
+    );
+}
+
+.stSlider [role="group"] > div > div {
+    z-index: 1;
+}
+
+/* Marcador e valor: verde no domínio de treino, âmbar na extrapolação */
+.stSlider [role="group"] > div > div:nth-child(2) {
+    background: var(--slider-accent, var(--primary));
+}
+
+.stSlider [data-testid="stSliderThumbValue"] p {
+    color: var(--slider-accent, var(--primary));
+    font-weight: 600;
+}
+
+.stSlider [data-testid="stWidgetLabel"]::after,
+.computed-field em,
+.extrap-tag {
+    font-style: normal;
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    padding: 2px 8px;
+    border-radius: 999px;
+    color: #92400E;
+    background: #FEF3C7;
+    border: 1px solid #FCD34D;
+}
+
+.stSlider [data-testid="stWidgetLabel"]::after {
+    content: var(--slider-badge, none);
+    margin-left: 8px;
+    align-self: center;
+}
+
+.computed-field em {
+    margin-left: 8px;
+}
+
+/* Aviso no cartão de resultados */
+.extrap-banner {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    border-radius: 12px;
+    font-size: 0.875rem;
+    color: #78350F;
+    background: repeating-linear-gradient(135deg, rgba(245, 158, 11, 0.12) 0 8px, rgba(245, 158, 11, 0.05) 8px 16px);
+    border: 1px solid rgba(245, 158, 11, 0.45);
 }
 
 /* ---------- Métricas ---------- */

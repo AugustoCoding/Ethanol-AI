@@ -1,3 +1,4 @@
+import math
 import os
 import numpy as np
 import streamlit as st
@@ -13,7 +14,7 @@ MODELS_DIR = os.path.join(BASE_DIR, "models")
 DATA_DIR = os.path.join(BASE_DIR, "data")
 ASSETS_DIR = os.path.join(BASE_DIR, "assets")
 
-# Faixas da amostragem LHS usadas no treino das ANNs. Os sliders do app ficam restritos a elas.
+# Faixas da amostragem LHS usadas no treino das ANNs.
 # Fonte: research/01_pretreatment/data_generation/LHS_pre.ipynb e
 #        research/02_enzymatic_hydrolysis/data_generation/LHS.ipynb
 # Nos dois conjuntos a lignina é calculada por diferença (100% − celulose − hemicelulose).
@@ -33,6 +34,26 @@ HYDROLYSIS_RANGES = {
     "lignin": (20.0, 30.0),         # %
     "time": (0.0, 96.0),            # h
 }
+
+# Os sliders vão além da faixa de treino (30% da largura da faixa para cada lado);
+# essas pontas aparecem marcadas como zona de extrapolação.
+EXTRAPOLATION_MARGIN = 0.30
+
+
+def extended_limits(train: tuple[float, float], step: float, floor: float | None = None) -> tuple[float, float]:
+    """Limites do slider: faixa de treino ampliada pela margem de extrapolação, alinhada ao passo."""
+    lo, hi = train
+    pad = (hi - lo) * EXTRAPOLATION_MARGIN
+    lo_ext = math.floor((lo - pad) / step + 1e-9) * step
+    hi_ext = math.ceil((hi + pad) / step - 1e-9) * step
+    if floor is not None:
+        lo_ext = max(lo_ext, floor)
+    return round(lo_ext, 6), round(hi_ext, 6)
+
+
+# Horizonte das simulações = maior tempo selecionável (inclui a margem extrapolada)
+PRE_TIME_MAX = extended_limits(PRETREATMENT_RANGES["time"], 0.5, floor=1.0)[1]
+HYD_TIME_MAX = extended_limits(HYDROLYSIS_RANGES["time"], 0.5, floor=1.0)[1]
 
 st.set_page_config(page_title="Ethanol AI", page_icon="⚗️", layout="wide")
 
@@ -196,8 +217,8 @@ def simulate_pretreatment_ann(
     hemicellulose_frac = hemicellulose_percent / 100.0
     lignin_frac = lignin_percent / 100.0
     
-    # Gerar array de tempos de 0 até 40 min (tempo máximo dos dados de treino)
-    time_array = np.linspace(0, PRETREATMENT_RANGES["time"][1], int(PRETREATMENT_RANGES["time"][1]) + 1)
+    # Gerar array de tempos de 0 até o maior tempo do slider (acima de 40 min é extrapolação)
+    time_array = np.linspace(0, PRE_TIME_MAX, int(PRE_TIME_MAX) + 1)
     
     # Preparar features de entrada para cada ponto de tempo
     # Formato: [Temperature, Cellulose Fraction, Hemicellulose Fraction, Lignin Fraction, Solids Loading, Time]
@@ -270,8 +291,8 @@ def simulate_enzymatic_hydrolysis(
     hemicellulose_frac = hemicellulose_percent / 100.0
     lignin_frac = lignin_percent / 100.0
     
-    # Gerar array de tempos de 0 a 96h
-    t_final_simulation = 96.0
+    # Gerar array de tempos de 0 até o maior tempo do slider (acima de 96 h é extrapolação)
+    t_final_simulation = HYD_TIME_MAX
     time_array = np.linspace(0, t_final_simulation, int(t_final_simulation) + 1)
     
     # Preparar features de entrada para cada ponto de tempo
@@ -381,6 +402,17 @@ def add_time_marker(fig: go.Figure, x: float, label: str | None = None, **subplo
     fig.add_vline(**kwargs)
 
 
+def add_extrapolation_zone(fig: go.Figure, x0: float, x1: float, label: bool = True, **subplot) -> None:
+    """Sombreia o trecho do eixo de tempo fora da faixa de treino."""
+    kwargs = dict(x0=x0, x1=x1, fillcolor="rgba(245, 158, 11, 0.10)", line_width=0, layer="below", **subplot)
+    if label:
+        kwargs.update(
+            annotation_text="Extrapolated", annotation_position="inside top right",
+            annotation_font=dict(color="#92400E", size=11),
+        )
+    fig.add_vrect(**kwargs)
+
+
 # ============================================================================
 # COMPONENTES DE INTERFACE
 # ============================================================================
@@ -408,20 +440,54 @@ def cellulose_bounds(ranges: dict) -> tuple[float, float]:
     return lo, hi
 
 
-def lignin_by_difference(cellulose: float, hemicellulose: float, ranges: dict) -> float:
-    """Mostra a lignina calculada por diferença e avisa se ela sai da faixa de treino."""
+def model_slider(
+    label: str, key: str, train: tuple[float, float], value: float, step: float, fmt: str,
+    flags: list[str], floor: float | None = None, help: str | None = None,
+) -> float:
+    """
+    Slider que cobre a faixa de treino do modelo mais a margem de extrapolação.
+    As pontas fora do treino aparecem em âmbar na trilha. Se o valor cair nelas, o marcador
+    fica âmbar, a etiqueta "Extrapolating" aparece no rótulo e o nome da variável entra em `flags`.
+    """
+    lo, hi = extended_limits(train, step, floor)
+    value = st.slider(label, min_value=lo, max_value=hi, value=value, step=step, format=fmt, key=key, help=help)
+
+    # Posição das zonas de extrapolação na trilha (em % da largura)
+    span = hi - lo
+    left = max(0.0, (train[0] - lo) / span * 100)
+    right = min(100.0, (train[1] - lo) / span * 100)
+    track = f".st-key-{key} [role='group'] > div"
+    css = f"{track}::before {{ width: {left:.3f}%; }} {track}::after {{ left: {right:.3f}%; width: {100 - right:.3f}%; }}"
+    if not (train[0] <= value <= train[1]):
+        flags.append(label.split(" (")[0])
+        css += f' .st-key-{key} {{ --slider-accent: var(--extrapolation); --slider-badge: "Extrapolating"; }}'
+    st.html(f"<style>{css}</style>")
+    return value
+
+
+def lignin_by_difference(cellulose: float, hemicellulose: float, ranges: dict, flags: list[str]) -> float:
+    """Mostra a lignina calculada por diferença, marcando quando ela sai da faixa de treino."""
     lignin = 100.0 - cellulose - hemicellulose
     lo, hi = ranges["lignin"]
-    st.html(
-        f'<div class="computed-field"><span>Lignin (by difference)</span><strong>{lignin:.1f}%</strong></div>'
-    )
-    if not (lo <= lignin <= hi):
-        st.info(
-            f"Lignin is outside the training range ({lo:.0f}–{hi:.0f}%). Adjust cellulose or "
-            "hemicellulose, otherwise results are extrapolated.",
-            icon=":material/info:",
+    if lo <= lignin <= hi:
+        st.html(f'<div class="computed-field"><span>Lignin (by difference)</span><strong>{lignin:.1f}%</strong></div>')
+    else:
+        flags.append("Lignin")
+        st.html(
+            '<div class="computed-field extrapolated"><span>Lignin (by difference)<em>Extrapolating</em></span>'
+            f'<strong>{lignin:.1f}%</strong></div>'
+            f'<p class="computed-hint">Model trained on {lo:.0f}–{hi:.0f}% lignin. Adjust cellulose or hemicellulose.</p>'
         )
     return lignin
+
+
+def extrapolation_banner(flags: list[str]) -> None:
+    """Resumo, no cartão de resultados, das entradas fora da faixa de treino."""
+    if flags:
+        st.html(
+            f'<div class="extrap-banner"><span class="extrap-tag">Extrapolating</span>'
+            f'{", ".join(flags)} outside the training range. Results are less reliable.</div>'
+        )
 
 
 def data_table(df: pd.DataFrame, file_name: str) -> None:
@@ -501,20 +567,15 @@ with tab_pre:
 
             group_label("Composition (% w/w)")
             R = PRETREATMENT_RANGES
-            celulose = st.slider("Cellulose (%)", *cellulose_bounds(R), value=40.0, step=0.5, format="%.1f", key="pre_cellulose")
-            hemicelulose = st.slider("Hemicellulose (%)", *R["hemicellulose"], value=30.0, step=0.5, format="%.1f", key="pre_hemicellulose")
-            lignina = lignin_by_difference(celulose, hemicelulose, R)
+            flags_pre: list[str] = []
+            celulose = model_slider("Cellulose (%)", "pre_cellulose", cellulose_bounds(R), 40.0, 0.5, "%.1f", flags_pre)
+            hemicelulose = model_slider("Hemicellulose (%)", "pre_hemicellulose", R["hemicellulose"], 30.0, 0.5, "%.1f", flags_pre)
+            lignina = lignin_by_difference(celulose, hemicelulose, R, flags_pre)
 
             group_label("Operating conditions")
-            solid_loading_hydro = st.slider(
-                "Solids loading (g/L)", *R["solids"], value=100.0, step=1.0, format="%.0f", key="pre_solids",
-            )
-            temperature_hydro = st.slider(
-                "Temperature (°C)", *R["temperature"], value=195.0, step=0.5, format="%.1f", key="pre_temperature",
-            )
-            time_hydro = st.slider(
-                "Time (min)", 1.0, R["time"][1], value=15.0, step=0.5, format="%.1f", key="pre_time",
-            )
+            solid_loading_hydro = model_slider("Solids loading (g/L)", "pre_solids", R["solids"], 100.0, 1.0, "%.0f", flags_pre)
+            temperature_hydro = model_slider("Temperature (°C)", "pre_temperature", R["temperature"], 195.0, 0.5, "%.1f", flags_pre)
+            time_hydro = model_slider("Time (min)", "pre_time", R["time"], 15.0, 0.5, "%.1f", flags_pre, floor=1.0)
 
     with col_results:
         with st.container(key="card-pre-results"):
@@ -529,6 +590,7 @@ with tab_pre:
                 else:
                     empty_state("Model under development", f"The Organosolv pretreatment model for {biomassa} is not available yet.")
             else:
+                extrapolation_banner(flags_pre)
                 try:
                     results = simulate_pretreatment_ann(
                         temperature=temperature_hydro,
@@ -562,6 +624,7 @@ with tab_pre:
                     add_point(fig, time_hydro, cellulose_at_time, "Cellulose")
                     add_point(fig, time_hydro, hemicellulose_at_time, "Hemicellulose")
                     add_time_marker(fig, time_hydro, f"t = {time_hydro:.1f} min")
+                    add_extrapolation_zone(fig, PRETREATMENT_RANGES["time"][1], PRE_TIME_MAX)
                     style_figure(fig, height=420)
                     fig.update_xaxes(title_text="Time (min)")
                     fig.update_yaxes(title_text="Concentration (g/L)")
@@ -599,20 +662,17 @@ with tab_hyd:
 
             group_label("Composition (% w/w)")
             R = HYDROLYSIS_RANGES
-            celulose1 = st.slider("Cellulose (%)", *cellulose_bounds(R), value=62.0, step=0.1, format="%.1f", key="hyd_cellulose")
-            hemicelulose1 = st.slider("Hemicellulose (%)", *R["hemicellulose"], value=12.0, step=0.1, format="%.1f", key="hyd_hemicellulose")
-            lignina1 = lignin_by_difference(celulose1, hemicelulose1, R)
+            flags_hyd: list[str] = []
+            celulose1 = model_slider("Cellulose (%)", "hyd_cellulose", cellulose_bounds(R), 62.0, 0.1, "%.1f", flags_hyd)
+            hemicelulose1 = model_slider("Hemicellulose (%)", "hyd_hemicellulose", R["hemicellulose"], 12.0, 0.1, "%.1f", flags_hyd)
+            lignina1 = lignin_by_difference(celulose1, hemicelulose1, R, flags_hyd)
 
             group_label("Operating conditions")
-            solid_loading = st.slider(
-                "Solids loading (g/L)", *R["solids"], value=175.0, step=1.0, format="%.0f", key="hyd_solids",
-            )
-            enzyme_loading = st.slider(
-                "Enzyme loading (g/L)", *R["enzyme"], value=0.5, step=0.05, format="%.2f", key="hyd_enzyme_loading",
-            )
-            reaction_time = st.slider(
-                "Reaction time (h)", 1.0, R["time"][1], value=60.0, step=0.5, format="%.1f",
-                key="hyd_time", help="The profile is always simulated up to 96 h; results are read at this time.",
+            solid_loading = model_slider("Solids loading (g/L)", "hyd_solids", R["solids"], 175.0, 1.0, "%.0f", flags_hyd, floor=10.0)
+            enzyme_loading = model_slider("Enzyme loading (g/L)", "hyd_enzyme_loading", R["enzyme"], 0.5, 0.01, "%.2f", flags_hyd, floor=0.01)
+            reaction_time = model_slider(
+                "Reaction time (h)", "hyd_time", R["time"], 60.0, 0.5, "%.1f", flags_hyd, floor=1.0,
+                help=f"The profile is always simulated up to {HYD_TIME_MAX:.0f} h; results are read at this time.",
             )
 
     with col_results:
@@ -625,6 +685,7 @@ with tab_hyd:
             if biomassa_hydrolysis != 'Sugarcane Straw':
                 empty_state("Model under development", "The Sugarcane Bagasse model for Enzymatic Hydrolysis is not available yet.")
             else:
+                extrapolation_banner(flags_hyd)
                 try:
                     profile_df = simulate_enzymatic_hydrolysis(
                         solid_loading=solid_loading,
@@ -665,6 +726,8 @@ with tab_hyd:
                     add_point(fig, reaction_time, cellobiose_at_time, "Cellobiose", row=2, col=1)
                     add_time_marker(fig, reaction_time, f"t = {reaction_time:.1f} h", row=1, col=1)
                     add_time_marker(fig, reaction_time, row=2, col=1)
+                    add_extrapolation_zone(fig, HYDROLYSIS_RANGES["time"][1], HYD_TIME_MAX, row=1, col=1)
+                    add_extrapolation_zone(fig, HYDROLYSIS_RANGES["time"][1], HYD_TIME_MAX, label=False, row=2, col=1)
                     style_figure(fig, height=520)
                     fig.update_xaxes(title_text="Time (h)", row=2, col=1)
                     fig.update_yaxes(title_text="Glucose (g/L)", row=1, col=1)
