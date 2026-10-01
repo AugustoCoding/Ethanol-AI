@@ -16,6 +16,7 @@
     --accent-light: #7DD3FC;
     --extrapolation: #B45309;
     --extrapolation-track: #F5B041;
+    --slider-track: rgba(151, 181, 166, 0.25);  /* trilha não preenchida padrão do Streamlit neste tema */
     --heading-font: "Plus Jakarta Sans", "Inter", system-ui, sans-serif;
 }
 
@@ -362,14 +363,14 @@
 }
 
 /* ---------- Sliders com zona de extrapolação ---------- */
-/* A própria trilha é pintada: verde na faixa de treino, âmbar nas pontas extrapoladas.
-   --zone-left e --zone-right são definidas por slider em model_slider(). */
+/* A própria trilha é pintada: cinza (cor original do Streamlit) na faixa de treino, âmbar nas
+   pontas extrapoladas. --zone-left e --zone-right são definidas por slider em model_slider(). */
 .stSlider [role="group"] > div > div:first-child {
     border-radius: 999px;
     background-image: linear-gradient(
         to right,
         var(--extrapolation-track) 0 var(--zone-left, 0%),
-        var(--primary) var(--zone-left, 0%) var(--zone-right, 100%),
+        var(--slider-track) var(--zone-left, 0%) var(--zone-right, 100%),
         var(--extrapolation-track) var(--zone-right, 100%) 100%
     ) !important;
 }
