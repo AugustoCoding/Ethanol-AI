@@ -15,6 +15,7 @@
     --accent: #2563EB;
     --accent-light: #7DD3FC;
     --extrapolation: #B45309;
+    --extrapolation-track: #F5B041;
     --heading-font: "Plus Jakarta Sans", "Inter", system-ui, sans-serif;
 }
 
@@ -361,33 +362,22 @@
 }
 
 /* ---------- Sliders com zona de extrapolação ---------- */
-/* Faixas listradas em âmbar atrás da trilha, nas pontas fora do treino.
-   A largura de cada ponta é definida por slider em model_slider(). */
-.stSlider [role="group"] > div::before,
-.stSlider [role="group"] > div::after {
-    content: "";
-    position: absolute;
-    top: 16px;
-    left: 0;
-    width: 0;
-    height: 12px;
+/* A própria trilha é pintada: verde na faixa de treino, âmbar nas pontas extrapoladas.
+   --zone-left e --zone-right são definidas por slider em model_slider(). */
+.stSlider [role="group"] > div > div:first-child {
     border-radius: 999px;
-    pointer-events: none;
-    z-index: 0;
-    background: repeating-linear-gradient(
-        135deg,
-        rgba(245, 158, 11, 0.55) 0 3px,
-        rgba(245, 158, 11, 0.22) 3px 6px
-    );
-}
-
-.stSlider [role="group"] > div > div {
-    z-index: 1;
+    background-image: linear-gradient(
+        to right,
+        var(--extrapolation-track) 0 var(--zone-left, 0%),
+        var(--primary) var(--zone-left, 0%) var(--zone-right, 100%),
+        var(--extrapolation-track) var(--zone-right, 100%) 100%
+    ) !important;
 }
 
 /* Marcador e valor: verde no domínio de treino, âmbar na extrapolação */
 .stSlider [role="group"] > div > div:nth-child(2) {
     background: var(--slider-accent, var(--primary));
+    box-shadow: 0 0 0 2px #FFFFFF, 0 1px 4px rgba(16, 35, 29, 0.3);
 }
 
 .stSlider [data-testid="stSliderThumbValue"] p {
@@ -414,6 +404,16 @@
     content: var(--slider-badge, none);
     margin-left: 8px;
     align-self: center;
+}
+
+/* Sem espaço, a etiqueta desce para a linha de baixo em vez de quebrar o rótulo no meio da palavra */
+.stSlider [data-testid="stWidgetLabel"] {
+    flex-wrap: wrap;
+    row-gap: 4px;
+}
+
+.stSlider [data-testid="stWidgetLabel"] > span {
+    min-width: max-content;
 }
 
 .computed-field em {

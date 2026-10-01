@@ -449,18 +449,17 @@ def model_slider(
 ) -> float:
     """
     Slider que cobre a faixa de treino do modelo mais a margem de extrapolação.
-    As pontas fora do treino aparecem em âmbar na trilha. Se o valor cair nelas, o marcador
+    A trilha é verde na faixa de treino e âmbar nas pontas extrapoladas. Se o valor cair nelas, o marcador
     fica âmbar, a etiqueta "Extrapolating" aparece no rótulo e o nome da variável entra em `flags`.
     """
     lo, hi = extended_limits(train, step, floor)
     value = st.slider(label, min_value=lo, max_value=hi, value=value, step=step, format=fmt, key=key, help=help)
 
-    # Posição das zonas de extrapolação na trilha (em % da largura)
+    # Onde começa e termina a faixa de treino na trilha (em % da largura); o CSS pinta o resto de âmbar
     span = hi - lo
     left = max(0.0, (train[0] - lo) / span * 100)
     right = min(100.0, (train[1] - lo) / span * 100)
-    track = f".st-key-{key} [role='group'] > div"
-    css = f"{track}::before {{ width: {left:.3f}%; }} {track}::after {{ left: {right:.3f}%; width: {100 - right:.3f}%; }}"
+    css = f".st-key-{key} {{ --zone-left: {left:.3f}%; --zone-right: {right:.3f}%; }}"
     if not (train[0] <= value <= train[1]):
         flags.append(label.split(" (")[0])
         css += f' .st-key-{key} {{ --slider-accent: var(--extrapolation); --slider-badge: "Extrapolating"; }}'
