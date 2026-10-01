@@ -1,3 +1,4 @@
+import json
 import math
 import os
 import numpy as np
@@ -402,12 +403,14 @@ def add_time_marker(fig: go.Figure, x: float, label: str | None = None, **subplo
     fig.add_vline(**kwargs)
 
 
-def add_extrapolation_zone(fig: go.Figure, x0: float, x1: float, label: bool = True, **subplot) -> None:
+def add_extrapolation_zone(
+    fig: go.Figure, x0: float, x1: float, label: bool = True, label_position: str = "inside top right", **subplot,
+) -> None:
     """Sombreia o trecho do eixo de tempo fora da faixa de treino."""
     kwargs = dict(x0=x0, x1=x1, fillcolor="rgba(245, 158, 11, 0.10)", line_width=0, layer="below", **subplot)
     if label:
         kwargs.update(
-            annotation_text="Extrapolated", annotation_position="inside top right",
+            annotation_text="Extrapolated", annotation_position=label_position,
             annotation_font=dict(color="#92400E", size=11),
         )
     fig.add_vrect(**kwargs)
@@ -490,13 +493,136 @@ def extrapolation_banner(flags: list[str]) -> None:
         )
 
 
-def data_table(df: pd.DataFrame, file_name: str) -> None:
+ICON_DOWNLOAD = '<span class="icon icon-download" aria-hidden="true"></span>'
+ICON_COPY = '<span class="icon icon-copy" aria-hidden="true"></span>'
+
+# Roda no navegador: gera o PNG com o Plotly da própria página e usa a área de transferência.
+EXPORT_SCRIPT = """
+(() => {
+  const bar = document.getElementById("__BAR_ID__");
+  if (!bar || bar.dataset.bound) return;
+  bar.dataset.bound = "1";
+  const data = __DATA__;
+  const status = bar.querySelector(".export-status");
+
+  const say = (msg) => {
+    status.textContent = msg;
+    clearTimeout(bar._timer);
+    bar._timer = setTimeout(() => { status.textContent = ""; }, 2500);
+  };
+
+  const download = (url, name) => {
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  };
+
+  // PNG em alta resolução, fundo branco e título com as condições simuladas
+  const chartPng = () => {
+    const gd = document.querySelector(".st-key-__CHART_KEY__ .js-plotly-plot");
+    if (!gd || !window.Plotly) return Promise.reject(new Error("chart not ready"));
+    // Largura mínima para a imagem sair igual em qualquer tela; altura extra para título e subtítulo
+    const width = Math.max(gd._fullLayout.width, 960);
+    const H = gd._fullLayout.height + 60;
+    const bottom = (gd.layout.margin && gd.layout.margin.b) || 8;
+    const layout = Object.assign({}, gd.layout, {
+      paper_bgcolor: "#ffffff",
+      plot_bgcolor: "#ffffff",
+      margin: Object.assign({}, gd.layout.margin, { t: 132, l: 28, r: 28 }),
+      // Sem tags HTML aqui: o st.html descarta scripts que contenham o sinal de menor seguido de letra
+      title: {
+        text: data.title, x: 0.02, xanchor: "left", y: 1 - 16 / H, yanchor: "top", yref: "container",
+        font: { size: 16, color: "#10231D", weight: 700 },
+        subtitle: { text: data.subtitle, font: { size: 12, color: "#47605A" } },
+      },
+      legend: Object.assign({}, gd.layout.legend, { y: 1 - 72 / H, x: 0.02, xref: "container" }),
+      annotations: (gd.layout.annotations || []).concat([{
+        text: "Ethanol AI", showarrow: false, xref: "paper", yref: "paper",
+        x: 1, xanchor: "right", y: 1 + (132 - 18) / (H - 132 - bottom), yanchor: "top",
+        font: { size: 11, color: "#7A8C86" },
+      }]),
+    });
+    return window.Plotly.toImage({ data: gd.data, layout }, { format: "png", width, height: H, scale: 3 });
+  };
+
+  bar.addEventListener("click", async (event) => {
+    const button = event.target.closest("button[data-action]");
+    if (!button) return;
+    try {
+      switch (button.dataset.action) {
+        case "png":
+          download(await chartPng(), data.file + ".png");
+          say("PNG downloaded");
+          break;
+        case "copy-img": {
+          const blob = chartPng().then((url) => fetch(url)).then((r) => r.blob());
+          let item;
+          try { item = new ClipboardItem({ "image/png": blob }); }
+          catch (e) { item = new ClipboardItem({ "image/png": await blob }); }
+          await navigator.clipboard.write([item]);
+          say("Image copied");
+          break;
+        }
+        case "csv": {
+          const url = URL.createObjectURL(new Blob([data.csv], { type: "text/csv" }));
+          download(url, data.file + ".csv");
+          setTimeout(() => URL.revokeObjectURL(url), 2000);
+          say("CSV downloaded");
+          break;
+        }
+        case "copy-table":
+          await navigator.clipboard.writeText(data.tsv);
+          say("Table copied");
+          break;
+      }
+    } catch (err) {
+      say("Could not complete: " + err.message);
+    }
+  });
+})();
+"""
+
+
+def chart_exports(df: pd.DataFrame, chart_key: str, file_base: str, title: str, subtitle: str) -> None:
+    """Botões para baixar/copiar a imagem do gráfico e a tabela, e a tabela em um expander."""
+    table = df.round(4)
+    payload = json.dumps({
+        "file": file_base,
+        "title": title,
+        "subtitle": subtitle,
+        "csv": table.to_csv(index=False),
+        "tsv": table.to_csv(index=False, sep="\t"),  # cola em colunas no Excel/Sheets
+    }).replace("</", "<\\/")
+    bar_id = f"export-{chart_key}"
+    script = (
+        EXPORT_SCRIPT.replace("__BAR_ID__", bar_id)
+        .replace("__CHART_KEY__", chart_key)
+        .replace("__DATA__", payload)
+    )
+    st.html(
+        f"""
+<div class="export-bar" id="{bar_id}">
+  <div class="export-group">
+    <span class="export-label">Chart</span>
+    <button type="button" data-action="png" title="Download the chart as a PNG image">{ICON_DOWNLOAD}PNG</button>
+    <button type="button" data-action="copy-img" title="Copy the chart image to the clipboard">{ICON_COPY}Copy</button>
+  </div>
+  <div class="export-group">
+    <span class="export-label">Table</span>
+    <button type="button" data-action="csv" title="Download the data as CSV">{ICON_DOWNLOAD}CSV</button>
+    <button type="button" data-action="copy-table" title="Copy the data (paste into Excel or Google Sheets)">{ICON_COPY}Copy</button>
+  </div>
+  <span class="export-status" role="status" aria-live="polite"></span>
+</div>
+<script>{script}</script>
+""",
+        unsafe_allow_javascript=True,
+    )
     with st.expander("Data table", icon=":material/table_chart:"):
         st.dataframe(df.round(3), hide_index=True)
-        st.download_button(
-            "Download CSV", df.to_csv(index=False).encode("utf-8"), file_name=file_name,
-            mime="text/csv", icon=":material/download:",
-        )
 
 
 # ============================================================================
@@ -628,15 +754,18 @@ with tab_pre:
                     style_figure(fig, height=420)
                     fig.update_xaxes(title_text="Time (min)")
                     fig.update_yaxes(title_text="Concentration (g/L)")
-                    st.plotly_chart(fig, width="stretch", theme=None, config=PLOTLY_CONFIG)
+                    st.plotly_chart(fig, width="stretch", theme=None, config=PLOTLY_CONFIG, key="chart-pre")
 
-                    data_table(
+                    chart_exports(
                         pd.DataFrame({
                             'Time (min)': results['time'],
                             'Cellulose (g/L)': results['cellulose'],
                             'Hemicellulose (g/L)': results['hemicellulose'],
                         }),
-                        "pretreatment_profile.csv",
+                        "chart-pre", "pretreatment_profile",
+                        f"Hydrothermal pretreatment · {biomassa}",
+                        f"{temperature_hydro:.1f} °C · {solid_loading_hydro:.0f} g/L solids · {celulose:.1f}% cellulose · "
+                        f"{hemicelulose:.1f}% hemicellulose · {lignina:.1f}% lignin",
                     )
 
 # ----------------------------------------------------------------------------
@@ -726,15 +855,22 @@ with tab_hyd:
                     add_point(fig, reaction_time, cellobiose_at_time, "Cellobiose", row=2, col=1)
                     add_time_marker(fig, reaction_time, f"t = {reaction_time:.1f} h", row=1, col=1)
                     add_time_marker(fig, reaction_time, row=2, col=1)
-                    add_extrapolation_zone(fig, HYDROLYSIS_RANGES["time"][1], HYD_TIME_MAX, row=1, col=1)
+                    add_extrapolation_zone(
+                        fig, HYDROLYSIS_RANGES["time"][1], HYD_TIME_MAX, label_position="inside bottom right", row=1, col=1,
+                    )
                     add_extrapolation_zone(fig, HYDROLYSIS_RANGES["time"][1], HYD_TIME_MAX, label=False, row=2, col=1)
                     style_figure(fig, height=520)
                     fig.update_xaxes(title_text="Time (h)", row=2, col=1)
                     fig.update_yaxes(title_text="Glucose (g/L)", row=1, col=1)
                     fig.update_yaxes(title_text="Xylose, cellobiose (g/L)", row=2, col=1)
-                    st.plotly_chart(fig, width="stretch", theme=None, config=PLOTLY_CONFIG)
+                    st.plotly_chart(fig, width="stretch", theme=None, config=PLOTLY_CONFIG, key="chart-hyd")
 
-                    data_table(profile_df, "enzymatic_hydrolysis_profile.csv")
+                    chart_exports(
+                        profile_df, "chart-hyd", "enzymatic_hydrolysis_profile",
+                        f"Enzymatic hydrolysis · {biomassa_hydrolysis} · {enzyme}",
+                        f"{solid_loading:.0f} g/L solids · {enzyme_loading:.2f} g/L enzyme · {celulose1:.1f}% cellulose · "
+                        f"{hemicelulose1:.1f}% hemicellulose · {lignina1:.1f}% lignin",
+                    )
 
 st.html("""
 <footer class="footer">
